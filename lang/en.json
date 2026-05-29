@@ -1,0 +1,340 @@
+{
+   "PF2E-AZTECS-SIEGE": {
+      "Actor": {
+         "SiegeWeapon": "Siege Weapon"
+      },
+      "Tabs": {
+         "Ammunition": "Ammunition",
+         "Crew": "Crew",
+         "SFX": "Sound Effects",
+         "Siege": "Siege",
+         "Description": "Description",
+         "Actions": "Actions"
+      },
+      "Attributes": {
+         "Length": "Length",
+         "Width": "Width",
+         "Height": "Height",
+         "Price": "Price",
+         "Speed": "Speed",
+         "Bulk": "Bulk",
+         "DisableDC": "Disable DC",
+         "HitPoints": "Hit Points",
+         "BrokenThreshold": "BT",
+         "CurrentHP": "Current HP",
+         "MaxHP": "Max HP",
+         "ArmorClass": "Armor Class",
+         "AC": "AC",
+         "Hardness": "Hard.",
+         "EmittingSound": "Emitting Sound?",
+         "Traits": "Traits",
+         "Reflex": "Reflex",
+         "Will": "Will"
+      },
+      "Traits": {
+         "SiegeWeapon": "Siege Weapon",
+         "Portable": "Portable",
+         "Mounted": "Mounted"
+      },
+      "Sheet": {
+         "ConvertToSiege": "Convert to Siege Weapon",
+         "MountableByPCs": "Mountable by PCs",
+         "CharacterName": "Character Name",
+         "BulkTooltip": "How much Bulk this Siege Weapon adds in total when lifted by crew.",
+         "ItemLabel": "Item Level",
+         "ActionsHeader": "Actions",
+         "AttacksHeader": "Attacks",
+         "CreateAction": "Create Action",
+         "CreateAttack": "Create Attack"
+      },
+      "Crew": {
+         "Title": "Crew",
+         "Header": "Crew Position",
+         "PositionName": "Title (e.g. Gunner)",
+         "MinCrew": "Required Crew",
+         "MaxCrew": "Max Capacity",
+         "Icon": "Click to change icon",
+         "NewPosition": "New Position",
+         "RemoveTitle": "Remove Crew Position",
+         "RemoveConfirm": "Are you sure you want to remove this crew position?"
+      },
+      "Ammunition": {
+         "Name": "Name",
+         "Slug": "Slug",
+         "Max": "Max",
+         "MaxPlaceholder": "∞",
+         "MaxTooltip": "Leave empty for unlimited capacity",
+         "TypesHeader": "Ammunition Types",
+         "RemoveTitle": "Remove Ammunition Type",
+         "RemoveConfirm": "Are you sure you want to remove this ammunition type?"
+      },
+      "SFX": {
+         "Header": "Global Sound Effects",
+         "GlobalHeader": "Sound Effects",
+         "LoadPrefix": "Load {name}",
+         "ActionPrefix": "Action: {name}"
+      },
+      "ActionTab": {
+         "CrewAccess": "Crew Access (empty = all)",
+         "AddPosition": "Add Position",
+         "Prerequisites": "Prerequisites",
+         "RequireAction": "Require Action",
+         "RemoveOnUse": "Remove prerequisites on use",
+         "RollOptions": "Roll Options (comma-separated)",
+         "Traits": "Traits (comma-separated)",
+         "TakeAmmoFromAdjacent": "Take ammo from adjacent token",
+         "LoadThreshold": "Load Threshold",
+         "EffectDuration": "Effect Duration (rounds)",
+         "EffectExpiry": "Effect Expiry",
+         "TurnStart": "Turn Start",
+         "TurnEnd": "Turn End",
+         "Unlimited": "Unlimited",
+         "UsesAmmunition": "Uses Ammunition",
+         "AmmunitionType": "Ammunition Type",
+         "SelectAmmunition": "— Select —",
+         "Spend": "Spend (per use)",
+         "Proficiencies": "Proficiencies",
+         "AddAnother": "Add",
+         "WeaponProficiencies": "Weapon Proficiencies",
+         "Skills": "Skills",
+         "SiegeBaseAttackBonus": "Siege Base Attack Bonus",
+         "IsRangedAttack": "Is Ranged Attack",
+         "BlindRange": "Blind Range (ft)",
+         "MinRangeVolley": "Min Range / Volley (ft)",
+         "RangeIncrement": "Range Increment (ft)",
+         "MaxRange": "Max Range (ft)",
+         "SubjectToMAP": "Subject to MAP",
+         "AttackActionType": "Attack Action Type",
+         "StandardAbility": "Standard Ability",
+         "AreaFire": "Area Fire",
+         "AutoFire": "Auto Fire",
+         "SingleTarget": "Single Target Save",
+         "AreaFeet": "Area Size (ft)",
+         "SaveDC": "Save DC",
+         "DamageInstances": "Damage Instances",
+         "AddDamageInstance": "Add Damage",
+         "RequiredSkills": "Required Skills",
+         "AddSkill": "Add Skill",
+         "LevelBasedDC": "Level-based DC",
+         "LorePlaceholder": "lore name (e.g. siege-weapon)",
+         "RemoveSkill": "Remove Skill",
+         "RemoveSkillConfirm": "Remove this skill requirement?",
+         "RemoveDamagePart": "Remove Damage",
+         "RemoveDamageConfirm": "Remove this damage instance?"
+      },
+      "ActionTemplates": {
+         "Aim": {
+            "Name": "Aim",
+            "Desc": "Take careful aim before firing."
+         },
+         "Load": {
+            "Name": "Load",
+            "Desc": "Load ammunition into the siege weapon.",
+            "FullDesc": "Athletics check required. Loads ammunition into the siege weapon. The load threshold determines how many successful loads are required before ammunition is actually inserted."
+         },
+         "Move": {
+            "Name": "Move",
+            "Desc": "Move the siege weapon. Requires multiple crew."
+         },
+         "Disassemble": {
+            "Name": "Disassemble",
+            "Desc": "Take apart the siege weapon for transport."
+         },
+         "Reassemble": {
+            "Name": "Reassemble",
+            "Desc": "Reassemble the siege weapon for use."
+         },
+         "CustomAction": {
+            "Name": "New Action",
+            "Desc": "Describe this custom action."
+         }
+      },
+      "AttackTemplates": {
+         "Strike": {
+            "Name": "Strike",
+            "Desc": "Make a strike with the siege weapon."
+         },
+         "Ability": {
+            "Name": "Ability Attack",
+            "Desc": "An area or save-based attack."
+         },
+         "Loaded": {
+            "Name": "Loaded"
+         }
+      },
+      "Builder": {
+         "CreateActionTitle": "Create Action",
+         "CreateAttackTitle": "Create Attack",
+         "SelectTemplate": "Select template:",
+         "Create": "Create"
+      },
+      "Mount": {
+         "Title": "Mount on {name}",
+         "MountAs": "Mount as {position}",
+         "LiftAndMount": "Lift & Mount",
+         "LiftTitle": "Lift {name}",
+         "CurrentLifters": "Current lifters:",
+         "None": "None",
+         "BulkLifted": "{lifted} / {total} Bulk lifted",
+         "CarryingCapacity": "Carrying capacity (encumbered @ {enc}+1 ({encPlus}), max {max}). Currently carrying:",
+         "BulkToLift": "Bulk to lift:",
+         "ExceedsCapacity": "Exceeds your carry capacity ({max}).",
+         "OnlyBulkLeft": "Only {bulk} Bulk left to lift.",
+         "CapAtMax": "Capping at {name}'s max ({max}).",
+         "PositionFull": "Position '{position}' is already full ({max} max).",
+         "MarkerDescription": "<p>Mounted on {siege} as a {position}.</p>"
+      },
+      "ActionMacro": {
+         "AppTitle": "{name} Actions",
+         "NoCrewToPerform": "Cannot perform actions: required crew not mounted.",
+         "ShorthandedActive": "Shorthanded active",
+         "PenaltyApplied": "Penalty applied to checks",
+         "Repair": "Repair Siege Weapon",
+         "DelegateWeight": "Delegate Weight",
+         "CurrentlyLifting": "Currently lifting {bulk} Bulk",
+         "Ammunition": "Ammunition",
+         "Area": "Area",
+         "SaveDC": "Save DC",
+         "Damage": "Damage",
+         "Range": "Range (Blind / Min / Max)",
+         "CornerShot": "Cannon Corner Shot",
+         "LethalAttack": "Lethal Attack",
+         "HighestStrInCrew": "Use highest STR among crew",
+         "VehiclePenalties": "Vehicle Penalties",
+         "Penalty2": "-2 (Lesser)",
+         "Penalty4": "-4 (Greater)",
+         "Traits": "Traits",
+         "Prerequisites": "Prerequisites",
+         "CrewNotMet": "Crew requirements not met.",
+         "Understaffed": "Understaffed",
+         "LaunchAttack": "Launch Attack ({mod})",
+         "UseAbility": "Use Ability",
+         "PerformAction": "Perform Action",
+         "SkillBtn": "{name} ({mod}) DC {dc}",
+         "Missing": "Missing {details}",
+         "VersatilePrefix": "Versatile {letter}",
+         "AttackTier": "Attack Tier (MAP)",
+         "MAP1": "1st Attack (No Penalty)",
+         "MAP2": "2nd Attack",
+         "MAP3": "3rd+ Attack",
+         "RollOptionsTitle": "{name} Roll Options",
+         "RollAttack": "Roll Attack",
+         "SituationalModifier": "Situational Modifier"
+      },
+      "Load": {
+         "Ammunition": "Ammunition",
+         "Amount": "Amount",
+         "Tracker": "Loaded: {current} / {max}",
+         "DialogTitle": "Load {name}",
+         "LoadButton": "Load",
+         "ProgressInfo": "{name} successful. ({current} / {target} required to load ammunition)."
+      },
+      "Delegate": {
+         "Title": "Delegate Weight – {name}",
+         "DelegateButton": "Delegate",
+         "DelegateTo": "Delegate to:",
+         "BulkToDelegate": "Bulk to delegate:",
+         "TargetOption": "{name} (carrying {current}; can take {capacity})",
+         "LiftingDescription": "You are currently lifting <strong>{bulk}</strong> Bulk of <strong>{name}</strong>.",
+         "AmountAtLeastOne": "Amount must be at least 1.",
+         "AtMost": "You can delegate at most {max}.",
+         "TargetCanAccept": "Target can only accept {headroom} more Bulk.",
+         "CapDelegation": "Capping delegation to {name}'s headroom ({headroom}).",
+         "Delegated": "<b>{crewman}</b> delegated <b>{amount}</b> Bulk of <b>{siege}</b> to <b>{target}</b>."
+      },
+      "Markers": {
+         "Dropped": "Dropped",
+         "DroppedDesc": "<p>This portable siege weapon has been dropped.</p>",
+         "DroppedDescFull": "<p><strong>{name}</strong> has been dropped and cannot be used until lifted by enough crew.</p>",
+         "Lifted": "Lifted",
+         "LiftedDesc": "<p><strong>{name}</strong> is being lifted by its crew.</p>",
+         "LiftedItem": "{name} (Lifted)",
+         "LiftedItemDesc": "<p>You are lifting a portable siege weapon.</p>",
+         "LiftingEffect": "Lifting {bulk} Bulk of {total}",
+         "LiftingDesc": "<p>You are lifting <strong>{name}</strong>. Bulk shown in counter.</p>",
+         "LoadedPrefix": "Loaded: {name}",
+         "LoadedDesc": "<p>{qty} unit(s) of <strong>{name}</strong> loaded.</p>",
+         "ActionUsedSuffix": "{name} used",
+         "ActionUsedDesc": "The {name} action was performed.",
+         "MountedOn": "Mounted on {name}"
+      },
+      "Notifications": {
+         "ConvertedToSiege": "{name} converted to Siege Weapon.",
+         "DroppedCannotRemove": "The Dropped marker cannot be removed manually; it is managed by the system.",
+         "LiftCappedByCapacity": "Cannot lift more than {max} (your capacity or remaining siege bulk).",
+         "AmmunitionOnlyStorage": "Siege Weapons can only store ammunition. Define ammunition types in the Ammunition tab first.",
+         "InvalidAmmo": "{name} is not a valid ammunition type for this Siege Weapon.",
+         "MaxCapacityReached": "Cannot add {name}: max capacity already reached.",
+         "MaxCapacityReachedGeneric": "Maximum capacity reached.",
+         "CapacityAdjusted": "Capacity full; adding only {qty} of {name}.",
+         "SelectOneCrewmanOneSiege": "Select exactly one crewman token and target exactly one siege weapon.",
+         "MustBeSiegeWeapon": "The target must be a Siege Weapon.",
+         "NoCrewPositions": "This Siege Weapon has no crew positions defined.",
+         "CrewmanMounted": "{crewman} mounted on {siege} as {position}.",
+         "CrewmanDismounted": "{crewman} dismounted from {siege}.",
+         "CannotBeMountedByPCs": "This Siege Weapon cannot be mounted by player characters.",
+         "SelectCharacterTokenFirst": "Select a character token first.",
+         "MissingCraftingSkill": "Selected crewman has no Crafting skill.",
+         "CrewmanNotFound": "Crewman actor not found.",
+         "StrikeNotFoundRemount": "Siege strike not found. Please remount.",
+         "NotMountedOnSiege": "This crewman is not mounted on any Siege Weapon.",
+         "SiegeWeaponNotFound": "Siege Weapon not found.",
+         "NoAvailableActions": "No available actions for this position.",
+         "SelectExactlyOneCrewman": "Select exactly one crewman.",
+         "NotEnoughCrew": "Not enough crew to perform actions.",
+         "TooCloseBlindRange": "Target is too close! Cannot strike within Blind Range ({range} ft).",
+         "TooFarMaxRange": "Target is too far! Cannot strike beyond Max Range ({range} ft).",
+         "MissingPrereqs": "Cannot perform {name}. Missing prerequisites: {list}",
+         "MissingRequiredAmmo": "Missing required Ammunition: {name}",
+         "InsufficientAmmo": "Insufficient Ammunition.",
+         "LoreNotFound": "Lore {name} not found.",
+         "SkillNotFound": "Skill {name} not found.",
+         "ActionFailed": "{name} failed.",
+         "FailedReloadStrike": "Failed to reload Strike. Please remount.",
+         "NoAmmoTypesDefined": "No ammunition types defined for this Siege Weapon.",
+         "SiegeTokenNotFound": "Siege weapon token not found on scene.",
+         "NoAdjacentAmmo": "No adjacent tokens have this ammunition.",
+         "DelegateOnlyPortable": "Weight delegation only applies to portable siege weapons.",
+         "NotLifting": "{name} is not currently lifting {siege}.",
+         "NothingToDelegate": "{name} has no Bulk to delegate.",
+         "NotCrewMembersToDelegate": "No other mounted crew members are available to delegate weight to.",
+         "TargetNoLongerValid": "Delegation target is no longer valid.",
+         "MustHaveOneProficiency": "At least one proficiency is required."
+      },
+      "Chat": {
+         "AmmoLoaded": "<b>{crewman}</b> loaded <b>{qty}</b> {name} into <b>{siege}</b>.",
+         "PerformedAction": "<b>{crewman}</b> performed <b>{action}</b> on {siege}.",
+         "ActionFailed": "<b>{crewman}</b> attempted <b>{action}</b> on {siege} but failed."
+      },
+      "Modifiers": {
+         "Base": "Base",
+         "BaseDamage": "Base Damage",
+         "AdditionalDamage": "Additional Damage",
+         "SiegeBaseBonus": "Siege Base Bonus",
+         "Shorthanded": "Shorthanded",
+         "Situational": "Situational Modifier",
+         "LethalPenalty": "Lethal Attack Penalty",
+         "SkillBonus": "{name} Bonus",
+         "RangePenalty": "Range Increment Penalty",
+         "Volley": "Volley Penalty",
+         "CrewStrengthBonus": "Crew Strength Bonus"
+      },
+      "Saves": {
+         "Title": "{name} Save"
+      },
+      "Skills": {
+         "Lore": "Lore",
+         "LoreSuffix": "{name} Lore",
+         "WeaponSuffix": "{name} Weapons"
+      },
+      "Buttons": {
+         "Confirm": "Confirm",
+         "Cancel": "Cancel",
+         "PostToChat": "Post to Chat"
+      },
+      "Misc": {
+         "None": "None",
+         "Infinity": "∞"
+      }
+   }
+}

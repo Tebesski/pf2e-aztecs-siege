@@ -1,0 +1,66 @@
+<section class="sheet-body">
+   <section class="sheet-content">
+
+      <div class="tab details active" data-tab="details">
+         <div class="details-content">
+            <div class="bio-item trait-size">
+               <section class="vehicle-details">
+                  <div class="frame image-container">
+                     <img class="actor-image" src="{{document.img}}" title="{{document.name}}" data-edit="img" />
+                     <a class="hover-icon" data-action="showImage"><i class="fa-solid fa-image fa-fw"></i></a>
+                  </div>
+                  <div class="detail-sheet">
+                     <div class="detail-small row-nr-1 span-2-columns">
+                        <div class="inputSplit">
+                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Length"}}</label>
+                           <input class="details-input" name="system.details.space.long" type="number" value="{{system.details.space.long}}" />
+                        </div>
+                        <div class="inputSplit">
+                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Width"}}</label>
+                           <input class="details-input" name="system.details.space.wide" type="number" value="{{system.details.space.wide}}" />
+                        </div>
+                        <div class="inputSplit">
+                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Height"}}</label>
+                           <input class="details-input" name="system.details.space.high" type="number" value="{{system.details.space.high}}" />
+                        </div>
+                        <div class="inputSplit">
+                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Price"}}</label>
+                           <input class="details-input" name="system.details.price" type="number" value="{{system.details.price}}" />
+                        </div>
+                     </div>
+                     <div class="row-nr-2 span-2-columns">
+                        <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Speed"}}</label>
+                        <input class="details-input" name="system.details.speed" type="text" value="{{system.details.speed}}" />
+                     </div>
+                  </div>
+               </section>
+
+               <section class="vehicle-properties">
+                  <div class="detailsInput flexitem-full">
+                     <span class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Traits"}}</span>
+                     <ul class="tags">
+                        {{#each actorTraits as |trait|}}
+                           <li class="tag tag_secondary" data-trait="{{trait.value}}">{{trait.label}}</li>
+                        {{/each}}
+                        <li class="tag tag_secondary edit-btn">
+                           <a class="tag-selector" data-tag-selector="basic" data-config-types="vehicleTraits" data-property="system.traits">
+                              <i class="fa-solid fa-plus"></i>
+                           </a>
+                        </li>
+                     </ul>
+                  </div>
+               </section>
+            </div>
+         </div>
+      </div>
+
+      <div class="tab actions" data-tab="actions"></div>
+      <div class="tab ammunition" data-tab="ammunition"></div>
+      <div class="tab crew" data-tab="crew"></div>
+      <div class="tab sfx" data-tab="sfx"></div>
+      <div class="tab description" data-tab="description">
+         {{editor system.details.description target="system.details.description" button=true editable=true engine="prosemirror"}}
+      </div>
+
+   </section>
+</section>

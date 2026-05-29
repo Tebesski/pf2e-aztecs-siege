@@ -1,0 +1,21 @@
+<header class="siege-header-alt siege-header-tight">
+   <h3>{{localize "PF2E-AZTECS-SIEGE.Crew.Header"}} <a class="add-crew"><i class="fa-solid fa-plus"></i></a></h3>
+</header>
+<div class="crew-list-headers">
+   <span class="crew-col-icon crew-col-icon-small"></span>
+   <span class="crew-col-2">{{localize "PF2E-AZTECS-SIEGE.Crew.PositionName"}}</span>
+   <span class="crew-col-1">{{localize "PF2E-AZTECS-SIEGE.Crew.MinCrew"}}</span>
+   <span class="crew-col-1">{{localize "PF2E-AZTECS-SIEGE.Crew.MaxCrew"}}</span>
+   <span class="crew-col-icon"></span>
+</div>
+<div class="crew-list">
+   {{#each crew}}
+   <div class="crew-row" data-index="{{@index}}">
+      <img class="crew-icon-img" src="{{#if this.icon}}{{this.icon}}{{else}}icons/svg/mystery-man.svg{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.Icon"}}" width="24" height="24">
+      <input type="text" class="crew-input-text crew-title" value="{{this.title}}" placeholder="{{localize "PF2E-AZTECS-SIEGE.Crew.PositionName"}}">
+      <input type="number" class="crew-input-num crew-min" value="{{#if this.min}}{{this.min}}{{else}}1{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.MinCrew"}}" min="1">
+      <input type="number" class="crew-input-num crew-max" value="{{#if this.max}}{{this.max}}{{else}}1{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.MaxCrew"}}" min="1">
+      <a class="remove-crew crew-col-icon"><i class="fa-solid fa-trash"></i></a>
+   </div>
+   {{/each}}
+</div>

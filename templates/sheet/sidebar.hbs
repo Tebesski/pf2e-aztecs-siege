@@ -1,0 +1,53 @@
+<aside>
+   <div class="sidebar" data-group="dashboard" data-tab="sidebar">
+      <header><h2>{{localize "PF2E-AZTECS-SIEGE.Attributes.HitPoints"}}</h2></header>
+      <div class="hitpoints">
+         <div class="hp-big">
+            <div class="container temp-hp" title="{{localize "PF2E-AZTECS-SIEGE.Attributes.BrokenThreshold"}}">
+               <span class="sidebar_label">{{localize "PF2E-AZTECS-SIEGE.Attributes.BrokenThreshold"}}</span>
+               <div class="data-value"><h2>{{system.attributes.hp.brokenThreshold}}</h2></div>
+            </div>
+            <div class="container current-hp" title="{{localize "PF2E-AZTECS-SIEGE.Attributes.CurrentHP"}}">
+               <label class="sidebar_label">{{localize "PF2E-AZTECS-SIEGE.Attributes.CurrentHP"}}</label>
+               <div class="data-value">
+                  <input name="system.attributes.hp.value" type="number" value="{{system.attributes.hp.value}}" />
+               </div>
+            </div>
+            <div class="container max-hp" title="{{localize "PF2E-AZTECS-SIEGE.Attributes.MaxHP"}}">
+               <label class="sidebar_label">{{localize "PF2E-AZTECS-SIEGE.Attributes.MaxHP"}}</label>
+               <div class="data-value">
+                  <input name="system.attributes.hp.max" type="number" value="{{system.attributes.hp.max}}" />
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <header><h2>{{localize "PF2E-AZTECS-SIEGE.Attributes.ArmorClass"}}</h2></header>
+      <div class="armor-class">
+         <div class="shield ac" title="{{localize "PF2E-AZTECS-SIEGE.Attributes.ArmorClass"}}">
+            <div class="data-value">
+               <input name="system.attributes.ac.value" type="number" value="{{system.attributes.ac.value}}" />
+            </div>
+            <label class="sidebar_label">{{localize "PF2E-AZTECS-SIEGE.Attributes.AC"}}</label>
+         </div>
+         <div class="shield hardness" title="{{localize "PF2E-AZTECS-SIEGE.Attributes.Hardness"}}">
+            <div class="data-value">
+               <input name="system.attributes.hardness" type="number" value="{{system.attributes.hardness}}" />
+            </div>
+            <label class="sidebar_label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Hardness"}}</label>
+         </div>
+      </div>
+
+      <section class="emits-sound">
+         <header class="sound-label">
+            <h2>
+               <span>{{localize "PF2E-AZTECS-SIEGE.Attributes.EmittingSound"}}</span>
+               <i class="fa-solid fa-circle-info" data-tooltip="PF2E.Actor.Vehicle.EmitsSound.Hint" data-tooltip-direction="RIGHT"></i>
+            </h2>
+         </header>
+         <select name="system.attributes.emitsSound">
+            {{selectOptions emitsSoundOptions selected=system.attributes.emitsSound}}
+         </select>
+      </section>
+   </div>
+</aside>

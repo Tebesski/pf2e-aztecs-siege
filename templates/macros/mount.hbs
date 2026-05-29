@@ -1,0 +1,65 @@
+<div class="siege-actions-accordion mount-accordion">
+   {{#each positions}}
+      <details>
+         <summary>
+            <div class="action-name">
+               <img src="{{this.icon}}" class="action-icon" />
+               <span>{{this.title}} ({{this.currentOccupants}} / {{this.maxCap}})</span>
+               <span class="siege-req-badge {{#if this.isMet}}siege-req-met{{else}}siege-req-unmet{{/if}}">{{localize "PF2E-AZTECS-SIEGE.Mount.MountAs" position=""}}: {{this.minReq}}</span>
+            </div>
+            <i class="fa-solid fa-chevron-right chevron"></i>
+         </summary>
+         <div class="details-body">
+            <div class="siege-actions-accordion">
+               {{#each this.actions}}
+                  <details>
+                     <summary>
+                        <div class="action-name">
+                           <img src="{{this.img}}" class="action-icon" />
+                           <span>{{this.name}}</span>
+                           {{{this.costGlyph}}}
+                        </div>
+                        <i class="fa-solid fa-chevron-right chevron"></i>
+                     </summary>
+                     <div class="details-body siege-details-body-small">
+                        {{#if this.isAttack}}
+                           <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Prerequisites"}}:</strong> {{this.prereqs}}</p>
+                           <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Ammunition"}}:</strong>
+                              {{#if this.flag.ammoSlug}}{{this.ammoName}} ({{this.spend}}){{else}}{{localize "PF2E-AZTECS-SIEGE.Misc.None"}}{{/if}}
+                           </p>
+                           <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Traits"}}:</strong>
+                              {{#if this.flag.traits}}{{this.flag.traits}}{{else}}{{localize "PF2E-AZTECS-SIEGE.Misc.None"}}{{/if}}
+                           </p>
+                           {{#if this.isAbility}}
+                              <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Area"}}:</strong> {{this.flag.areaSize}} ft. {{capitalize this.flag.areaType}}</p>
+                              <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.SaveDC"}}:</strong> {{this.flag.saveDC}}</p>
+                           {{else if this.isRanged}}
+                              <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Range"}}:</strong>
+                                 {{#if this.flag.blindRange}}{{this.flag.blindRange}}{{else}}&infin;{{/if}}
+                                 /
+                                 {{#if this.flag.minRange}}{{this.flag.minRange}}{{else}}0{{/if}}
+                                 /
+                                 {{#if this.flag.maxRange}}{{this.flag.maxRange}}{{else}}&infin;{{/if}}
+                              </p>
+                              <p><strong>{{this.profString}}</strong></p>
+                              <p>+{{this.flag.attackBonus}}</p>
+                           {{else}}
+                              <p><strong>{{this.profString}}</strong></p>
+                              <p>+{{this.flag.attackBonus}}</p>
+                           {{/if}}
+                           <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Damage"}}:</strong> {{this.damageString}}</p>
+                        {{/if}}
+                        {{#if this.description}}
+                           <div class="description">{{{this.description}}}</div>
+                        {{/if}}
+                     </div>
+                  </details>
+               {{/each}}
+            </div>
+            <button class="roll-siege-btn mount-btn siege-mount-btn" data-position="{{this.title}}">
+               <i class="fa-solid fa-user-plus"></i> {{this.mountLabel}}
+            </button>
+         </div>
+      </details>
+   {{/each}}
+</div>

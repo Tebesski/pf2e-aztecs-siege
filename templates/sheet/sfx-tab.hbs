@@ -1,0 +1,11 @@
+<h3>{{globalHeader}}</h3>
+{{#each rows}}
+   <div class="form-group" data-key="{{this.key}}">
+      <label>{{this.label}}</label>
+      <div class="form-fields">
+         <input type="text" value="{{this.value}}" class="sfx-input" data-key="{{this.key}}" />
+         <button type="button" class="file-picker" data-type="audio" data-target="{{this.key}}"><i class="fa-solid fa-file-audio"></i></button>
+         <button type="button" class="play-sfx" data-key="{{this.key}}"><i class="fa-solid fa-play"></i></button>
+      </div>
+   </div>
+{{/each}}
