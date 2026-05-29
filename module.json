@@ -1,14 +1,12 @@
 {
    "id": "pf2e-aztecs-siege",
    "title": "PF2e Aztec's Siege",
-   "version": "1.0.0",
+   "version": "#{VERSION}#",
    "compatibility": {
       "minimum": "14",
       "verified": "14"
    },
-   "authors": [
-      { "name": "Aztec" }
-   ],
+   "authors": [{ "name": "Aztec" }],
    "esmodules": ["scripts/main.mjs"],
    "styles": ["styles/module.css"],
    "languages": [
@@ -16,9 +14,10 @@
       { "lang": "ru", "name": "Русский", "path": "lang/ru.json" }
    ],
    "relationships": {
-      "requires": [
-         { "id": "socketlib", "type": "module" }
-      ]
+      "requires": [{ "id": "socketlib", "type": "module" }]
    },
-   "socket": true
+   "socket": true,
+   "url": "#{URL}#",
+   "manifest": "#{MANIFEST}#",
+   "download": "#{DOWNLOAD}#"
 }
