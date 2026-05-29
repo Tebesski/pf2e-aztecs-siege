@@ -28,6 +28,7 @@ import {
 } from "./helpers.mjs"
 import { repairMacro } from "./repair.mjs"
 import { delegateWeightMacro } from "./delegate.mjs"
+import { SiegeSocketManager } from "../managers/sockets.mjs"
 
 export async function actionMacro(crewmanActor = null) {
    const crewman = crewmanActor || _resolveCrewman()
@@ -93,7 +94,14 @@ export async function actionMacro(crewmanActor = null) {
          content.innerHTML = result
       }
       _onRender() {
-         _bindAppListeners(this, { crewman, siege, isPortable, crewBlocked, shorthandedPenalty, autoDC })
+         _bindAppListeners(this, {
+            crewman,
+            siege,
+            isPortable,
+            crewBlocked,
+            shorthandedPenalty,
+            autoDC,
+         })
       }
    }
 
@@ -160,10 +168,11 @@ function _buildI18nLabels() {
 function _buildActionData(a, siege, crewman, autoDC, isPortable) {
    const flag = { skills: [], ...(a.getFlag(MODULE_ID, "siegeAction") || {}) }
    const prereqData = computePrereqData(siege, flag)
-   const { name: ammoName, loaded: ammoLoaded, max: ammoMax } = getAmmoInfo(
-      siege,
-      flag,
-   )
+   const {
+      name: ammoName,
+      loaded: ammoLoaded,
+      max: ammoMax,
+   } = getAmmoInfo(siege, flag)
    const cornerShot = computeCornerShot(crewman, flag)
 
    const rawTraits = splitCSV(flag.traits).map((t) => t.toLowerCase())
@@ -277,15 +286,23 @@ function _bindAppListeners(app, ctx) {
             .prop("checked", false)
    })
 
-   root.find(".roll-siege-btn").on("click", (e) => _handleRollClick(e, app, ctx))
+   root
+      .find(".roll-siege-btn")
+      .on("click", (e) => _handleRollClick(e, app, ctx))
 }
 
 async function _handleRollClick(e, app, ctx) {
    e.preventDefault()
    const btn = $(e.currentTarget)
    const btnType = btn.data("type")
-   const { crewman, siege, isPortable, crewBlocked, shorthandedPenalty, autoDC } =
-      ctx
+   const {
+      crewman,
+      siege,
+      isPortable,
+      crewBlocked,
+      shorthandedPenalty,
+      autoDC,
+   } = ctx
 
    if (btnType === "repair") {
       repairMacro(crewman, siege)
@@ -306,7 +323,11 @@ async function _handleRollClick(e, app, ctx) {
    const detailsBody = btn.closest(".details-body")
 
    const rollContext = _readRollContext(detailsBody, flag)
-   const customOptions = _buildCustomOptions(siege, flag, rollContext.versatileTrait)
+   const customOptions = _buildCustomOptions(
+      siege,
+      flag,
+      rollContext.versatileTrait,
+   )
 
    const isLoading =
       actionItem.name === tKey("ActionTemplates.Load.Name") ||
@@ -333,13 +354,21 @@ async function _handleRollClick(e, app, ctx) {
    const applyEffects = () => _applyEffects(siege, actionItem, flag)
 
    if (btnType === "skill") {
-      const skillResult = await _handleSkillRoll(e, btn, actionItem, crewman, siege, flag, {
-         autoDC,
-         customOptions,
-         shorthandedPenalty,
-         applyEffects,
-         app,
-      })
+      const skillResult = await _handleSkillRoll(
+         e,
+         btn,
+         actionItem,
+         crewman,
+         siege,
+         flag,
+         {
+            autoDC,
+            customOptions,
+            shorthandedPenalty,
+            applyEffects,
+            app,
+         },
+      )
       if (!skillResult) return
    }
 
@@ -362,7 +391,13 @@ async function _handleRollClick(e, app, ctx) {
    }
 
    if (btnType === "ability-attack") {
-      await _handleAbilityAttack(actionItem, siege, flag, detailsBody, applyEffects)
+      await _handleAbilityAttack(
+         actionItem,
+         siege,
+         flag,
+         detailsBody,
+         applyEffects,
+      )
       return app.close()
    }
 
@@ -402,7 +437,12 @@ function _readRollContext(detailsBody, flag) {
          ? versatileRadio.data("type")
          : null
 
-   return { baseHasNonlethal, isNonlethalChecked, versatileTrait, versatileType }
+   return {
+      baseHasNonlethal,
+      isNonlethalChecked,
+      versatileTrait,
+      versatileType,
+   }
 }
 
 function _buildCustomOptions(siege, flag, versatileTrait) {
@@ -477,8 +517,7 @@ async function _deductAmmo(siege, flag) {
    const maxUses = ammoItem.system.charges?.max || 0
    const currentUses = ammoItem.system.charges?.value || 0
    const qty = ammoItem.system.quantity || 1
-   const totalAvailable =
-      maxUses > 0 ? (qty - 1) * maxUses + currentUses : qty
+   const totalAvailable = maxUses > 0 ? (qty - 1) * maxUses + currentUses : qty
 
    if (totalAvailable < spendAmount) {
       ui.notifications.warn(tKey("Notifications.InsufficientAmmo"))
@@ -487,19 +526,26 @@ async function _deductAmmo(siege, flag) {
 
    const newTotal = totalAvailable - spendAmount
    if (newTotal <= 0) {
-      await ammoItem.delete()
+      await SiegeSocketManager.modifySiegeItem(siege.uuid, "delete", [
+         ammoItem.id,
+      ])
       return true
    }
 
    if (maxUses > 0) {
       const newQty = Math.ceil(newTotal / maxUses)
       const newUses = newTotal % maxUses === 0 ? maxUses : newTotal % maxUses
-      await ammoItem.update({
-         "system.quantity": newQty,
-         "system.charges.value": newUses,
-      })
+      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
+         {
+            _id: ammoItem.id,
+            "system.quantity": newQty,
+            "system.charges.value": newUses,
+         },
+      ])
    } else {
-      await ammoItem.update({ "system.quantity": newTotal })
+      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
+         { _id: ammoItem.id, "system.quantity": newTotal },
+      ])
    }
    return true
 }
@@ -509,20 +555,21 @@ async function _applyEffects(siege, actionItem, flag) {
    const prereqNames = new Set(prereqs.map((p) => p.name))
 
    if (flag.removePrereqsOnUse !== false) {
-      const usedSuffix = tKey("Markers.ActionUsedSuffix", { name: "@@@" }).replace(
-         "@@@",
-         "",
-      )
+      const usedSuffix = tKey("Markers.ActionUsedSuffix", {
+         name: "@@@",
+      }).replace("@@@", "")
       const toDelete = siege.itemTypes.effect.filter((ef) => {
-         if (ef.name.startsWith(tKey("Markers.LoadedPrefix", { name: "" }))) return false
+         if (ef.name.startsWith(tKey("Markers.LoadedPrefix", { name: "" })))
+            return false
          const base = ef.name.includes(usedSuffix)
             ? ef.name.replace(usedSuffix, "")
             : ef.name
          return prereqNames.has(base) || prereqNames.has(ef.name)
       })
       if (toDelete.length > 0) {
-         await siege.deleteEmbeddedDocuments(
-            "Item",
+         await SiegeSocketManager.modifySiegeItem(
+            siege.uuid,
+            "delete",
             toDelete.map((ef) => ef.id),
          )
       }
@@ -541,13 +588,18 @@ async function _applyEffects(siege, actionItem, flag) {
       )
    if (!isRequired) return
 
-   const effectName = tKey("Markers.ActionUsedSuffix", { name: actionItem.name })
+   const effectName = tKey("Markers.ActionUsedSuffix", {
+      name: actionItem.name,
+   })
    const existing = siege.itemTypes.effect.find((ef) => ef.name === effectName)
 
    if (existing) {
-      await existing.update({
-         "system.badge.value": (existing.system.badge?.value || 1) + 1,
-      })
+      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
+         {
+            _id: existing.id,
+            "system.badge.value": (existing.system.badge?.value || 1) + 1,
+         },
+      ])
       return
    }
 
@@ -559,7 +611,7 @@ async function _applyEffects(siege, actionItem, flag) {
            expiry: flag.effectExpiry || "turn-start",
         }
 
-   await siege.createEmbeddedDocuments("Item", [
+   await SiegeSocketManager.modifySiegeItem(siege.uuid, "create", [
       {
          name: effectName,
          type: "effect",
@@ -680,7 +732,8 @@ async function _handleLoadingFlow(actionItem, siege, crewman, flag) {
       .map((t) => {
          const tSlug = slugify(t.slug || t.name)
          const currentQty = AmmunitionManager.getCurrentAmmoCount(siege, tSlug)
-         const max = t.max === "" || t.max == null ? tKey("Misc.Infinity") : t.max
+         const max =
+            t.max === "" || t.max == null ? tKey("Misc.Infinity") : t.max
          return `<option value="${tSlug}" data-loaded="${currentQty}" data-max="${max}">${t.name}</option>`
       })
       .join("")
@@ -738,7 +791,14 @@ function _bindLoadDialog() {
    updateTracker()
 }
 
-async function _performLoad(choice, siege, crewman, actionItem, flag, ammoTypes) {
+async function _performLoad(
+   choice,
+   siege,
+   crewman,
+   actionItem,
+   flag,
+   ammoTypes,
+) {
    const tInfo = ammoTypes.find(
       (t) => slugify(t.slug || t.name) === choice.slug,
    )
@@ -748,7 +808,9 @@ async function _performLoad(choice, siege, crewman, actionItem, flag, ammoTypes)
    const availableSpace = maxCap - currentQty
 
    if (availableSpace <= 0) {
-      return ui.notifications.warn(tKey("Notifications.MaxCapacityReachedGeneric"))
+      return ui.notifications.warn(
+         tKey("Notifications.MaxCapacityReachedGeneric"),
+      )
    }
 
    const requestedQty = parseInt(choice.qty) || 1
@@ -800,8 +862,7 @@ async function _performLoad(choice, siege, crewman, actionItem, flag, ammoTypes)
       ammoProcured = actualLoadQty
    }
 
-   globalThis.socket.executeAsGM(
-      "executeSiegeLoad",
+   await SiegeSocketManager.executeLoad(
       siege.uuid,
       choice,
       extracts,
@@ -815,14 +876,21 @@ async function _performLoad(choice, siege, crewman, actionItem, flag, ammoTypes)
       (ef) => ef.name === usedName,
    )
    if (loadEffects.length > 0) {
-      await siege.deleteEmbeddedDocuments(
-         "Item",
+      await SiegeSocketManager.modifySiegeItem(
+         siege.uuid,
+         "delete",
          loadEffects.map((ef) => ef.id),
       )
    }
 }
 
-async function _handleAbilityAttack(actionItem, siege, flag, detailsBody, applyEffects) {
+async function _handleAbilityAttack(
+   actionItem,
+   siege,
+   flag,
+   detailsBody,
+   applyEffects,
+) {
    const isAreaOrSave =
       flag.actionType === "area-fire" ||
       flag.actionType === "auto-fire" ||
@@ -933,7 +1001,11 @@ async function _handleStrike(e, actionItem, siege, crewman, flag, ctx) {
    if (reload) generatedStrike = reload
 
    const weaponMod = generatedStrike.totalModifier
-   const { bestMod, bestSkillName } = computeBestModifier(crewman, flag, weaponMod)
+   const { bestMod, bestSkillName } = computeBestModifier(
+      crewman,
+      flag,
+      weaponMod,
+   )
    const modDiff = bestMod - weaponMod
 
    const choice = await _showStrikeOptionsDialog(actionItem, flag)
@@ -1085,8 +1157,14 @@ async function _showStrikeOptionsDialog(actionItem, flag) {
 }
 
 function _buildStrikeModifiers(choice, ctx) {
-   const { modDiff, bestSkillName, shorthandedPenalty, flag, distance, rollContext } =
-      ctx
+   const {
+      modDiff,
+      bestSkillName,
+      shorthandedPenalty,
+      flag,
+      distance,
+      rollContext,
+   } = ctx
    const modifiers = []
 
    if (choice.sit !== 0) {
@@ -1168,13 +1246,23 @@ function _buildStrikeModifiers(choice, ctx) {
 }
 
 function _updateAttackMessage(msg, ctx) {
-   const { siege, siegeTokenId, actionItem, flag, strikeLabel, crewman, rollContext } =
-      ctx
+   const {
+      siege,
+      siegeTokenId,
+      actionItem,
+      flag,
+      strikeLabel,
+      crewman,
+      rollContext,
+   } = ctx
    const currentTraits = msg.flags?.pf2e?.context?.traits || []
    let newTraits = [...currentTraits]
 
    if (!newTraits.some((t) => t.name === "siege-weapon")) {
-      newTraits.push({ name: "siege-weapon", label: tKey("Traits.SiegeWeapon") })
+      newTraits.push({
+         name: "siege-weapon",
+         label: tKey("Traits.SiegeWeapon"),
+      })
    }
 
    for (const t of splitCSV(flag.traits)) {
