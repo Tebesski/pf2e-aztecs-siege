@@ -1,0 +1,146 @@
+<div class="tab siege siege-tab siege-ammo-tab" data-tab="siege">
+   <div class="siege-damage-settings">
+      <div class="form-group">
+         <label>{{i18n.damageInstances}}</label>
+         <div class="siege-damage-parts">
+            {{#each enrichedDamageParts}}
+            <div class="damage-part-row" data-index="{{this.index}}">
+               <input type="number" class="ammo-dp-dice dp-input-small" value="{{this.dice}}">
+               <span class="dp-separator">d</span>
+               <select class="ammo-dp-die dp-input-med">
+                  {{#each this.dieOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                  {{/each}}
+               </select>
+               <select class="ammo-dp-type siege-flex-1">
+                  {{#each this.typeOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <select class="ammo-dp-category siege-flex-1">
+                  {{#each this.categoryOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <a class="remove-ammo-damage-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+            <button type="button" class="add-ammo-damage-part"><i class="fa-solid fa-plus"></i> {{i18n.addDamageInstance}}</button>
+         </div>
+      </div>
+   </div>
+
+   <hr>
+   <div class="form-group">
+      <label>{{i18n.strikeAttackBonus}}</label>
+      <input type="number" data-ammo-path="attackBonus" value="{{flags.attackBonus}}">
+   </div>
+   <div class="form-group">
+      <label>{{i18n.rollOptions}}</label>
+      <div class="siege-inline-row siege-ammo-rewrite-row">
+         <input type="text" data-ammo-path="rollOptions" value="{{flags.rollOptions}}">
+         <label class="siege-inline-checkbox-tight">
+            <input type="checkbox" data-ammo-path="rewriteRollOptions" {{#if flags.rewriteRollOptions}}checked{{/if}}> {{i18n.rewrite}}
+         </label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label>{{i18n.traits}}</label>
+      <div class="siege-inline-row siege-ammo-rewrite-row">
+         <input type="text" data-ammo-path="traits" value="{{flags.traits}}">
+         <label class="siege-inline-checkbox-tight">
+            <input type="checkbox" data-ammo-path="rewriteTraits" {{#if flags.rewriteTraits}}checked{{/if}}> {{i18n.rewrite}}
+         </label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label>{{i18n.material}}</label>
+      <select data-ammo-path="material">
+         {{#each materialOptions}}
+         <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+         {{/each}}
+      </select>
+   </div>
+
+   <hr>
+   <div class="form-group">
+      <label class="siege-bold-checkbox">
+         <input type="checkbox" data-ammo-path="modifyRange" class="ammo-modify-range-cb" {{#if flags.modifyRange}}checked{{/if}}> {{i18n.modifyRange}}
+      </label>
+   </div>
+   <div class="ammo-range-settings" {{#unless flags.modifyRange}}style="display: none;"{{/unless}}>
+      <div class="form-group">
+         <label class="siege-bold-checkbox">
+            <input type="checkbox" data-ammo-path="isRanged" class="ammo-is-ranged-cb" {{#if flags.isRanged}}checked{{/if}}> {{i18n.isRangedAttack}}
+         </label>
+      </div>
+      <div class="ammo-ranged-fields" {{#unless flags.isRanged}}style="display: none;"{{/unless}}>
+         <div class="form-group siege-grid-4">
+            <div class="siege-grid-col">
+               <label>{{i18n.blindRange}}</label>
+               <input type="number" data-ammo-path="blindRange" value="{{flags.blindRange}}">
+            </div>
+            <div class="siege-grid-col">
+               <label>{{i18n.minRangeVolley}}</label>
+               <input type="number" data-ammo-path="minRange" value="{{flags.minRange}}">
+            </div>
+            <div class="siege-grid-col">
+               <label>{{i18n.rangeIncrement}}</label>
+               <input type="number" data-ammo-path="rangeIncrement" value="{{flags.rangeIncrement}}">
+            </div>
+            <div class="siege-grid-col">
+               <label>{{i18n.maxRange}}</label>
+               <input type="number" data-ammo-path="maxRange" value="{{flags.maxRange}}">
+            </div>
+         </div>
+      </div>
+   </div>
+
+   <hr>
+   <div class="form-group">
+      <label class="siege-bold-checkbox">
+         <input type="checkbox" data-ammo-path="modifySaveDC" class="ammo-modify-savedc-cb" {{#if flags.modifySaveDC}}checked{{/if}}> {{i18n.modifySaveDC}}
+      </label>
+   </div>
+   <div class="ammo-savedc-settings" {{#unless flags.modifySaveDC}}style="display: none;"{{/unless}}>
+      <div class="form-group align-top">
+         <label>{{i18n.saveDC}}</label>
+         <div class="crew-access-container">
+            <div class="siege-savedc-add-row">
+               <input type="text" class="ammo-savedc-input" list="ammo-savedc-presets" placeholder="{{i18n.saveDCPlaceholder}}">
+               <a class="add-ammo-savedc-path" data-tooltip="{{i18n.addAnother}}"><i class="fa-solid fa-plus"></i></a>
+            </div>
+            <datalist id="ammo-savedc-presets">
+               {{#each saveDCPresets}}
+               <option value="{{this.value}}">{{this.label}}</option>
+               {{/each}}
+            </datalist>
+            <div class="crew-access-badges siege-savedc-list">
+               {{#each flags.saveDCPaths}}
+               <span class="crew-access-badge siege-savedc-badge">{{this}} <a class="remove-ammo-savedc-path" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a></span>
+               {{/each}}
+            </div>
+         </div>
+      </div>
+   </div>
+
+   <hr>
+   <div class="form-group">
+      <label class="siege-bold-checkbox">
+         <input type="checkbox" data-ammo-path="modifyArea" class="ammo-modify-area-cb" {{#if flags.modifyArea}}checked{{/if}}> {{i18n.modifyArea}}
+      </label>
+   </div>
+   <div class="ammo-area-settings" {{#unless flags.modifyArea}}style="display: none;"{{/unless}}>
+      <div class="form-group">
+         <label>{{i18n.areaFeet}}</label>
+         <div class="siege-grid-4">
+            <input type="number" data-ammo-path="areaSize" value="{{flags.areaSize}}" step="5" class="siege-grid-col">
+            <select data-ammo-path="areaType" class="siege-grid-col">
+               {{#each areaTypeOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+               {{/each}}
+            </select>
+         </div>
+      </div>
+   </div>
+</div>

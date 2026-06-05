@@ -135,6 +135,7 @@ export class SiegeSheetUI {
       invTab.find(".remove-ammo-type").on("click", async (e) => {
          e.preventDefault()
          const confirmed = await foundry.applications.api.DialogV2.confirm({
+            classes: ["siege-v2-dialog"],
             window: { title: tKey("Ammunition.RemoveTitle") },
             content: `<p>${tKey("Ammunition.RemoveConfirm")}</p>`,
             rejectClose: false,

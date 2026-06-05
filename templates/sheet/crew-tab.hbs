@@ -10,12 +10,16 @@
 </div>
 <div class="crew-list">
    {{#each crew}}
-   <div class="crew-row" data-index="{{@index}}">
+   <div class="crew-row {{#if this.isManaged}}crew-row-managed{{/if}}" data-index="{{@index}}" data-managed="{{#if this.isManaged}}true{{else}}false{{/if}}">
       <img class="crew-icon-img" src="{{#if this.icon}}{{this.icon}}{{else}}icons/svg/mystery-man.svg{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.Icon"}}" width="24" height="24">
-      <input type="text" class="crew-input-text crew-title" value="{{this.title}}" placeholder="{{localize "PF2E-AZTECS-SIEGE.Crew.PositionName"}}">
+      <input type="text" class="crew-input-text crew-title" value="{{this.title}}" placeholder="{{localize "PF2E-AZTECS-SIEGE.Crew.PositionName"}}" {{#if this.isManaged}}readonly{{/if}}>
       <input type="number" class="crew-input-num crew-min" value="{{#if this.min}}{{this.min}}{{else}}1{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.MinCrew"}}" min="1">
       <input type="number" class="crew-input-num crew-max" value="{{#if this.max}}{{this.max}}{{else}}1{{/if}}" title="{{localize "PF2E-AZTECS-SIEGE.Crew.MaxCrew"}}" min="1">
+      {{#if this.isManaged}}
+      <span class="crew-col-icon crew-managed-lock" data-tooltip="{{localize "PF2E-AZTECS-SIEGE.Crew.ManagedLock"}}"><i class="fa-solid fa-lock"></i></span>
+      {{else}}
       <a class="remove-crew crew-col-icon"><i class="fa-solid fa-trash"></i></a>
+      {{/if}}
    </div>
    {{/each}}
 </div>

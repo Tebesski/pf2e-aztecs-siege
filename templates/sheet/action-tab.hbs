@@ -1,4 +1,13 @@
 <div class="tab siege siege-tab" data-tab="siege">
+   {{#if vehicleNeedsIgnition}}
+   <div class="form-group siege-checkbox-row">
+      <label class="checkbox">
+         <input type="checkbox" data-action-path="needsIgnition" {{#if flags.needsIgnition}}checked{{/if}}>
+         {{i18n.needsIgnition}}
+         <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.needsIgnitionHint}}"></i>
+      </label>
+   </div>
+   {{/if}}
    <div class="form-group align-top">
       <label>{{i18n.crewAccess}}</label>
       <div class="crew-access-container">
@@ -16,6 +25,25 @@
       </div>
    </div>
 
+   {{#if ranksEnabled}}
+   <div class="form-group align-top">
+      <label>{{i18n.requiredRank}}</label>
+      <div class="crew-access-container">
+         <select class="add-required-rank-select">
+            <option value="">-- {{i18n.addRank}} --</option>
+            {{#each availableRanks}}
+            <option value="{{this.value}}">{{this.label}}</option>
+            {{/each}}
+         </select>
+         <div class="crew-access-badges">
+            {{#each requiredRankBadges}}
+            <span class="crew-access-badge">{{this.label}} <a class="remove-required-rank" data-rank="{{this.value}}"><i class="fa-solid fa-times"></i></a></span>
+            {{/each}}
+         </div>
+      </div>
+   </div>
+   {{/if}}
+
    <div class="form-group align-top">
       <label>{{i18n.prerequisites}}</label>
       <div class="crew-access-container">
@@ -24,22 +52,21 @@
             {{#each availablePrereqs}}
             <option value="{{this}}">{{this}}</option>
             {{/each}}
-         </select>
-         <div class="crew-access-badges">
+         </select>         <div class="crew-access-badges">
             {{#each enrichedPrereqs}}
             <span class="crew-access-badge">{{this.name}}
                {{#if this.showCount}}
-               <input type="number" class="prereq-count-input siege-prereq-count" data-index="{{@index}}" value="{{this.count}}" min="1">
+               <input type="number" class="prereq-count-input siege-prereq-count" data-index="{{this.index}}" value="{{this.count}}" min="1">
                {{/if}}
-               <a class="remove-prereq" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a>
+               {{#if this.removable}}
+               <a class="remove-prereq" data-index="{{this.index}}"><i class="fa-solid fa-times"></i></a>
+               {{/if}}
             </span>
             {{/each}}
          </div>
-         {{#unless showAttackHtml}}
          <label class="siege-inline-checkbox">
             <input type="checkbox" data-action-path="removePrereqsOnUse" {{#if flags.removePrereqsOnUse}}checked{{/if}}> {{i18n.removeOnUse}}
          </label>
-         {{/unless}}
       </div>
    </div>
 
@@ -52,14 +79,12 @@
       <input type="text" data-action-path="traits" value="{{flags.traits}}">
    </div>
 
-   {{#if isLoadingAction}}
+   {{#if showAttackHtml}}
    <div class="form-group">
-      <label>{{i18n.takeAmmoFromAdjacent}}</label>
-      <input type="checkbox" data-action-path="takeAmmoFromAdjacent" {{#if flags.takeAmmoFromAdjacent}}checked{{/if}}>
-   </div>
-   <div class="form-group">
-      <label>{{i18n.loadThreshold}}</label>
-      <input type="number" data-action-path="loadThreshold" value="{{flags.loadThreshold}}" min="1">
+      <label>{{i18n.loadActionsRequired}}
+         <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.loadActionsRequiredHint}}"></i>
+      </label>
+      <input type="number" data-action-path="loadActionsRequired" value="{{flags.loadActionsRequired}}" min="0">
    </div>
    {{/if}}
 
@@ -92,14 +117,25 @@
       </label>
    </div>
    <div class="siege-ammo-settings" {{#unless flags.usesAmmunition}}style="display: none;"{{/unless}}>
-      <div class="form-group">
+      <div class="form-group align-top">
          <label>{{i18n.ammunitionType}}</label>
-         <select data-action-path="ammoSlug">
-            <option value="">-- {{i18n.selectAmmunition}} --</option>
-            {{#each ammoOptions}}
-            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-            {{/each}}
-         </select>
+         <div class="crew-access-container">
+            <select class="add-action-ammo-select">
+               <option value="">-- {{i18n.selectAmmunition}} --</option>
+               {{#each ammoOptions}}
+               <option value="{{this.value}}">{{this.label}}</option>
+               {{/each}}
+            </select>
+            <div class="crew-access-badges">
+               {{#each selectedAmmoBadges}}
+               <span class="crew-access-badge">{{this.label}} <a class="remove-action-ammo" data-slug="{{this.value}}"><i class="fa-solid fa-times"></i></a></span>
+               {{/each}}
+            </div>
+         </div>
+      </div>
+      <div class="form-group">
+         <label>{{i18n.maxLoaded}}</label>
+         <input type="number" data-action-path="maxLoaded" value="{{flags.maxLoaded}}" placeholder="1" min="1">
       </div>
       <div class="form-group">
          <label>{{i18n.spend}}</label>
@@ -130,7 +166,7 @@
                   {{/each}}
                </optgroup>
             </select>
-            <input type="text" class="prof-lore-name siege-flex-1" value="{{this.loreName}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
+            <input type="text" class="prof-lore-name siege-flex-1" value="{{this.loreInput}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
             <a class="remove-prof siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
          </div>
          {{/each}}
@@ -196,9 +232,26 @@
       </div>
    </div>
    <div class="siege-save-settings" {{#unless showSaveDCSettings}}style="display: none;"{{/unless}}>
-      <div class="form-group">
-         <label>{{i18n.saveDC}}</label>
-         <input type="number" data-action-path="saveDC" value="{{flags.saveDC}}">
+      <div class="form-group align-top">
+         <label>{{i18n.saveDC}}
+            <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.saveDCHint}}"></i>
+         </label>
+         <div class="crew-access-container">
+            <div class="siege-savedc-add-row">
+               <input type="text" class="siege-savedc-input" list="siege-savedc-presets" placeholder="{{i18n.saveDCPlaceholder}}">
+               <a class="add-savedc-path" data-tooltip="{{i18n.addAnother}}"><i class="fa-solid fa-plus"></i></a>
+            </div>
+            <datalist id="siege-savedc-presets">
+               {{#each saveDCPresets}}
+               <option value="{{this.value}}">{{this.label}}</option>
+               {{/each}}
+            </datalist>
+            <div class="crew-access-badges siege-savedc-list">
+               {{#each flags.saveDCPaths}}
+               <span class="crew-access-badge siege-savedc-badge">{{this}} <a class="remove-savedc-path" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a></span>
+               {{/each}}
+            </div>
+         </div>
       </div>
    </div>
    {{/if}}
@@ -250,8 +303,8 @@
             <option value="{{this.value}}" {{#if this.selected}}selected{{/if}} {{#if this.disabled}}disabled{{/if}}>{{this.label}}</option>
             {{/each}}
          </select>
-         <input type="text" class="lore-name siege-flex-1" value="{{this.loreName}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
-         <input type="number" class="skill-dc siege-input-fixed" value="{{this.dc}}" placeholder="{{../i18n.levelBasedDC}}">
+         <input type="text" class="lore-name siege-flex-1" value="{{this.loreInput}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
+         <input type="text" class="skill-dc siege-input-fixed" value="{{this.dc}}" placeholder="{{../i18n.levelBasedDC}}">
          <a class="remove-skill siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
       </div>
       {{/each}}

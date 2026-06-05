@@ -51,7 +51,7 @@ export class SiegeActionsUI {
                .find(".sheet-navigation .item, .tabs [data-tab]")
                .last()
             tabNav.after(
-               `<a class="item siege-nav-item" data-tab="siege">${tKey("Tabs.Siege")}</a>`,
+               `<a class="item siege-nav-item" data-tab="siege" data-tooltip="${tKey("Tabs.EnginesOfWar")}"><i class="fa-solid fa-steering-wheel"></i></a>`,
             )
             html.find(".sheet-body, .tab-body").first().append(tabHtml)
 
@@ -66,18 +66,12 @@ export class SiegeActionsUI {
                   .removeClass("active")
                html.find(".siege-nav-item").addClass("active")
                html
-                  .find(".sheet-body > .tab, .tab-body > .tab")
+                  .find(".sheet-body .tab, .tab-body .tab")
                   .removeClass("active")
                html.find(".siege-tab").addClass("active")
             }
 
-            if (app._siegeScrollPos) {
-               const scrollEl =
-                  html.closest(".window-content")[0] ||
-                  html.find(".sheet-body")[0] ||
-                  html[0]
-               if (scrollEl) scrollEl.scrollTop = app._siegeScrollPos
-            }
+            this._restoreScroll(app, html)
 
             this.bindListeners(app, item, html, flags)
          },
@@ -85,8 +79,20 @@ export class SiegeActionsUI {
    }
 
    static _normalizeFlags(raw) {
+      
+      let requiredRanks = []
+      if (Array.isArray(raw.requiredRanks)) requiredRanks = raw.requiredRanks
+      else if (raw.requiredRank) requiredRanks = [raw.requiredRank]
+      const ammoSlugs = []
+      const addAmmoSlug = (value) => {
+         const slug = slugify(value)
+         if (slug && !ammoSlugs.includes(slug)) ammoSlugs.push(slug)
+      }
+      if (Array.isArray(raw.ammoSlugs)) raw.ammoSlugs.forEach(addAmmoSlug)
+      addAmmoSlug(raw.ammoSlug)
       return {
          crewAccess: Array.isArray(raw.crewAccess) ? raw.crewAccess : [],
+         requiredRanks,
          prerequisites: Array.isArray(raw.prerequisites)
             ? raw.prerequisites.map((p) =>
                  typeof p === "string" ? { name: p, count: 1 } : p,
@@ -95,14 +101,17 @@ export class SiegeActionsUI {
          effectDuration: raw.effectDuration ?? 1,
          effectExpiry: raw.effectExpiry || "turn-start",
          takeAmmoFromAdjacent: raw.takeAmmoFromAdjacent || false,
-         loadThreshold: raw.loadThreshold || 1,
+         loadActionsRequired: raw.loadActionsRequired || 0,
+         needsIgnition: raw.needsIgnition !== false,
          rollOptions: raw.rollOptions || "",
          traits: raw.traits || "",
          skills: raw.skills || [],
          isAttack: raw.isAttack || false,
          isStrike: raw.isStrike || false,
          usesAmmunition: raw.usesAmmunition ?? true,
-         ammoSlug: raw.ammoSlug || "",
+         ammoSlug: raw.ammoSlug || ammoSlugs[0] || "",
+         ammoSlugs,
+         maxLoaded: raw.maxLoaded || "",
          spend: raw.spend || "",
          proficiencies: Array.isArray(raw.proficiencies)
             ? raw.proficiencies
@@ -121,9 +130,66 @@ export class SiegeActionsUI {
          areaSize: raw.areaSize || 5,
          areaType: raw.areaType || "burst",
          saveDC: raw.saveDC || 10,
+         saveDCPaths: Array.isArray(raw.saveDCPaths)
+            ? raw.saveDCPaths
+            : raw.saveDC != null && raw.saveDC !== ""
+              ? [String(raw.saveDC)]
+              : [],
          unlimitedDuration: raw.unlimitedDuration || false,
          removePrereqsOnUse: raw.removePrereqsOnUse ?? true,
       }
+   }
+
+   static _normalizeLoreName(value) {
+      const raw = String(value || "")
+         .trim()
+         .replace(/\s+lore$/i, "")
+         .replace(/-lore$/i, "")
+      const base = slugify(raw)
+      return base ? `${base}-lore` : ""
+   }
+
+   static _loreInputValue(value) {
+      const base = String(value || "")
+         .replace(/-lore$/i, "")
+         .replace(/-/g, " ")
+         .trim()
+      return base
+         .split(/\s+/)
+         .filter(Boolean)
+         .map((w) => capitalize(w))
+         .join(" ")
+   }
+
+   static _scrollCandidates(app, html) {
+      const root = app.element || html?.[0]
+      return [
+         html.closest(".window-content")[0],
+         root?.querySelector?.(".window-content"),
+         html.find(".sheet-body")[0],
+         root?.querySelector?.(".sheet-body"),
+         html[0],
+      ].filter(Boolean)
+   }
+
+   static _captureScroll(app, html) {
+      const candidates = this._scrollCandidates(app, html)
+      app._siegeScrollPos = Math.max(
+         0,
+         ...candidates.map((el) => Number(el.scrollTop) || 0),
+      )
+   }
+
+   static _restoreScroll(app, html) {
+      if (app._siegeScrollPos == null) return
+      const restore = () => {
+         for (const el of this._scrollCandidates(app, html))
+            el.scrollTop = app._siegeScrollPos
+      }
+      restore()
+      requestAnimationFrame(restore)
+      setTimeout(restore, 0)
+      setTimeout(restore, 100)
    }
 
    static _buildTemplateData(item, flags) {
@@ -131,6 +197,7 @@ export class SiegeActionsUI {
          ...s,
          index: i,
          isLore: s.name === "lore",
+         loreInput: this._loreInputValue(s.loreName),
          skillOptions: ["lore", "", ...PF2E_SKILLS].map((sk) => ({
             value: sk,
             label:
@@ -148,6 +215,7 @@ export class SiegeActionsUI {
          ...p,
          index: i,
          isLore: p.name === "lore",
+         loreInput: this._loreInputValue(p.loreName),
          weaponOptions: WEAPON_PROFS.map((wp) => ({
             value: wp,
             label: tKey("Skills.WeaponSuffix", { name: capitalize(wp) }),
@@ -185,18 +253,42 @@ export class SiegeActionsUI {
       )
 
       const ammoTypes = item.parent.getFlag(MODULE_ID, "ammunitionTypes") || []
-      const ammoOptions = ammoTypes.map((t) => {
+      const selectedAmmo = new Set(flags.ammoSlugs)
+      const ammoOptions = ammoTypes.filter((t) => {
          const sl = slugify(t.slug || t.name)
-         return { value: sl, label: t.name, selected: flags.ammoSlug === sl }
+         return sl && !selectedAmmo.has(sl)
+      }).map((t) => {
+         const sl = slugify(t.slug || t.name)
+         return { value: sl, label: t.name }
+      })
+      const selectedAmmoBadges = flags.ammoSlugs.map((slug) => {
+         const found = ammoTypes.find((t) => slugify(t.slug || t.name) === slug)
+         return { value: slug, label: found?.name || slug }
+      })
+
+      
+      
+      const ranksEnabled = !!item.parent.getFlag(MODULE_ID, "ranksEnabled")
+      const vehicleRanks = item.parent.getFlag(MODULE_ID, "ranks") || []
+      const labelFor = (r) => (r.abbr ? `${r.name} (${r.abbr})` : r.name)
+      const availableRanks = vehicleRanks
+         .filter((r) => !flags.requiredRanks.includes(r.name))
+         .map((r) => ({ value: r.name, label: labelFor(r) }))
+      const requiredRankBadges = flags.requiredRanks.map((name) => {
+         const r = vehicleRanks.find((x) => x.name === name)
+         return { value: name, label: r ? labelFor(r) : name }
       })
 
       const traits = item.parent.system.traits?.value || []
       const basePrereqs = traits.includes("portable") ? ["Lifted"] : []
+      const loadActionName = tKey("ActionTemplates.Load.Name")
       const availablePrereqs = [
          ...basePrereqs,
          ...item.parent.items
             .filter((i) => {
                if (i.type !== "action" || i.id === item.id) return false
+               if (i.name === loadActionName || i.name === "Loading")
+                  return false
                const f = i.getFlag(MODULE_ID, "siegeAction")
                if (f && (f.isStrike || f.isAttack)) return false
                return true
@@ -204,11 +296,24 @@ export class SiegeActionsUI {
             .map((i) => i.name),
       ].filter((name) => !flags.prerequisites.some((p) => p.name === name))
 
-      const enrichedPrereqs = flags.prerequisites.map((p, i) => ({
+      const storedPrereqs = flags.prerequisites.map((p, i) => ({
          ...p,
          index: i,
          showCount: p.name !== "Lifted",
+         removable: true,
       }))
+      const isAmmoAttack =
+         (flags.isStrike || flags.isAttack) && flags.usesAmmunition !== false
+      const enrichedPrereqs = isAmmoAttack
+         ? [
+              {
+                 name: tKey("AttackTemplates.Loaded.Name"),
+                 showCount: false,
+                 removable: false,
+              },
+              ...storedPrereqs,
+           ]
+         : storedPrereqs
 
       const isLoadName = item.name === tKey("ActionTemplates.Load.Name")
       const isLoadingAction = isLoadName || item.name === "Loading"
@@ -216,6 +321,8 @@ export class SiegeActionsUI {
       return {
          moduleId: MODULE_ID,
          flags,
+         vehicleNeedsIgnition:
+            item.parent.getFlag(MODULE_ID, "needsIgnition") === true,
          availableCrew,
          availablePrereqs,
          enrichedPrereqs,
@@ -225,12 +332,34 @@ export class SiegeActionsUI {
          expiryStartSelected: flags.effectExpiry === "turn-start",
          expiryEndSelected: flags.effectExpiry === "turn-end",
          ammoOptions,
+         selectedAmmoBadges,
+         availableRanks,
+         requiredRankBadges,
+         saveDCPresets: [
+            { value: "@skills.athletics.dc.value", label: "Athletics DC" },
+            { value: "@skills.crafting.dc.value", label: "Crafting DC" },
+            {
+               value: "@skills.combat-vehicles-lore.dc.value",
+               label: "Combat Vehicles Lore DC",
+            },
+            { value: "@skills.artillery-lore.dc.value", label: "Artillery Lore DC" },
+            { value: "@attributes.classDC.value", label: "Class DC" },
+            { value: "@abilities.str.dc", label: "Strength DC" },
+            { value: "@abilities.dex.dc", label: "Dexterity DC" },
+            {
+               value: "min(@skills.combat-vehicles-lore.dc.value + 10, 20)",
+               label: "Combat Vehicles Lore + 10 (cap 20)",
+            },
+         ],
+         ranksEnabled,
          enrichedSkills,
          enrichedDamageParts,
          enrichedProficiencies,
          showAttackHtml: flags.isAttack || flags.isStrike,
          showAbilityAttackHtml: flags.isAttack && !flags.isStrike,
-         showDamageSection: flags.isStrike || (flags.isAttack && !flags.isStrike),
+         showDamageSection:
+            (flags.isStrike || (flags.isAttack && !flags.isStrike)) &&
+            !isAmmoAttack,
          showAreaSettings:
             flags.actionType === "area-fire" || flags.actionType === "auto-fire",
          showSaveDCSettings:
@@ -238,10 +367,11 @@ export class SiegeActionsUI {
             flags.actionType === "auto-fire" ||
             flags.actionType === "save-single",
          showDamageSettings:
-            flags.isStrike ||
-            flags.actionType === "area-fire" ||
-            flags.actionType === "auto-fire" ||
-            flags.actionType === "save-single",
+            !isAmmoAttack &&
+            (flags.isStrike ||
+               flags.actionType === "area-fire" ||
+               flags.actionType === "auto-fire" ||
+               flags.actionType === "save-single"),
          proficiencyOptions: WEAPON_PROFS.map((wp) => ({
             value: wp,
             label: tKey("Skills.WeaponSuffix", { name: capitalize(wp) }),
@@ -269,14 +399,18 @@ export class SiegeActionsUI {
          })),
          i18n: {
             crewAccess: tKey("ActionTab.CrewAccess"),
+            requiredRank: tKey("ActionTab.RequiredRank"),
+            addRank: tKey("ActionTab.AddRank"),
             addPosition: tKey("ActionTab.AddPosition"),
             prerequisites: tKey("ActionTab.Prerequisites"),
             requireAction: tKey("ActionTab.RequireAction"),
             removeOnUse: tKey("ActionTab.RemoveOnUse"),
             rollOptions: tKey("ActionTab.RollOptions"),
             traits: tKey("ActionTab.Traits"),
-            takeAmmoFromAdjacent: tKey("ActionTab.TakeAmmoFromAdjacent"),
-            loadThreshold: tKey("ActionTab.LoadThreshold"),
+            loadActionsRequired: tKey("ActionTab.LoadActionsRequired"),
+            loadActionsRequiredHint: tKey("ActionTab.LoadActionsRequiredHint"),
+            needsIgnition: tKey("ActionTab.NeedsIgnition"),
+            needsIgnitionHint: tKey("ActionTab.NeedsIgnitionHint"),
             effectDuration: tKey("ActionTab.EffectDuration"),
             effectExpiry: tKey("ActionTab.EffectExpiry"),
             turnStart: tKey("ActionTab.TurnStart"),
@@ -284,6 +418,7 @@ export class SiegeActionsUI {
             unlimited: tKey("ActionTab.Unlimited"),
             usesAmmunition: tKey("ActionTab.UsesAmmunition"),
             ammunitionType: tKey("ActionTab.AmmunitionType"),
+            maxLoaded: tKey("ActionTab.MaxLoaded"),
             selectAmmunition: tKey("ActionTab.SelectAmmunition"),
             spend: tKey("ActionTab.Spend"),
             proficiencies: tKey("ActionTab.Proficiencies"),
@@ -300,6 +435,8 @@ export class SiegeActionsUI {
             attackActionType: tKey("ActionTab.AttackActionType"),
             areaFeet: tKey("ActionTab.AreaFeet"),
             saveDC: tKey("ActionTab.SaveDC"),
+            saveDCHint: tKey("ActionTab.SaveDCHint"),
+            saveDCPlaceholder: tKey("ActionTab.SaveDCPlaceholder"),
             damageInstances: tKey("ActionTab.DamageInstances"),
             addDamageInstance: tKey("ActionTab.AddDamageInstance"),
             requiredSkills: tKey("ActionTab.RequiredSkills"),
@@ -319,11 +456,7 @@ export class SiegeActionsUI {
       }
 
       const setFlagWithScroll = async () => {
-         const scrollEl =
-            html.closest(".window-content")[0] ||
-            html.find(".sheet-body")[0] ||
-            html[0]
-         app._siegeScrollPos = scrollEl ? scrollEl.scrollTop : 0
+         this._captureScroll(app, html)
          await item.update({ [`flags.${MODULE_ID}.siegeAction`]: flags })
       }
 
@@ -335,12 +468,18 @@ export class SiegeActionsUI {
          else if (el.type === "number") value = Number(el.value) || 0
          else value = el.value
          flags[path] = value
-         await saveFlags()
+         if (path === "usesAmmunition") await setFlagWithScroll()
+         else await saveFlags()
       })
+
+      const setSectionVisible = (selector, visible) => {
+         const section = html.find(selector)
+         section.css("display", visible ? "" : "none")
+      }
 
       const toggleSection = (cbSelector, sectionSelector) =>
          html.find(cbSelector).on("change", (e) => {
-            html.find(sectionSelector).toggle(e.target.checked)
+            setSectionVisible(sectionSelector, e.target.checked)
          })
 
       toggleSection(".siege-is-ranged-cb", ".siege-ranged-settings")
@@ -354,15 +493,76 @@ export class SiegeActionsUI {
          const val = $(e.currentTarget).val()
          const isArea = val === "area-fire" || val === "auto-fire"
          const isSave = isArea || val === "save-single"
-         html.find(".siege-area-settings").toggle(isArea)
-         html.find(".siege-save-settings").toggle(isSave)
-         html.find(".siege-damage-settings").toggle(isSave)
+         setSectionVisible(".siege-area-settings", isArea)
+         setSectionVisible(".siege-save-settings", isSave)
+         setSectionVisible(".siege-damage-settings", isSave)
       })
 
       html.find(".add-crew-access-select").on("change", async (e) => {
          const val = $(e.currentTarget).val()
          if (!val) return
          if (!flags.crewAccess.includes(val)) flags.crewAccess.push(val)
+         await setFlagWithScroll()
+      })
+
+      html.find(".add-required-rank-select").on("change", async (e) => {
+         const val = $(e.currentTarget).val()
+         if (!val) return
+         flags.requiredRanks = flags.requiredRanks || []
+         if (!flags.requiredRanks.includes(val)) flags.requiredRanks.push(val)
+         await setFlagWithScroll()
+      })
+
+      html.find(".add-action-ammo-select").on("change", async (e) => {
+         const val = slugify($(e.currentTarget).val())
+         if (!val) return
+         flags.ammoSlugs = flags.ammoSlugs || []
+         if (!flags.ammoSlugs.includes(val)) flags.ammoSlugs.push(val)
+         if (!flags.ammoSlug) flags.ammoSlug = flags.ammoSlugs[0] || ""
+         await setFlagWithScroll()
+      })
+
+      html.find(".remove-action-ammo").on("click", async (e) => {
+         e.preventDefault()
+         const slug = slugify($(e.currentTarget).data("slug"))
+         flags.ammoSlugs = (flags.ammoSlugs || []).filter((s) => s !== slug)
+         flags.ammoSlug = flags.ammoSlugs[0] || ""
+         await setFlagWithScroll()
+      })
+
+      html.find(".remove-required-rank").on("click", async (e) => {
+         const rank = $(e.currentTarget).data("rank")
+         flags.requiredRanks = (flags.requiredRanks || []).filter(
+            (r) => r !== String(rank),
+         )
+         await setFlagWithScroll()
+      })
+
+      
+      html.find(".add-savedc-path").on("click", async (e) => {
+         e.preventDefault()
+         const input = $(e.currentTarget).siblings(".siege-savedc-input")
+         const val = (input.val() || "").trim()
+         if (!val) return
+         flags.saveDCPaths = flags.saveDCPaths || []
+         flags.saveDCPaths.push(val)
+         await setFlagWithScroll()
+      })
+
+      html.find(".siege-savedc-input").on("keydown", async (e) => {
+         if (e.key !== "Enter") return
+         e.preventDefault()
+         const val = ($(e.currentTarget).val() || "").trim()
+         if (!val) return
+         flags.saveDCPaths = flags.saveDCPaths || []
+         flags.saveDCPaths.push(val)
+         await setFlagWithScroll()
+      })
+
+      html.find(".remove-savedc-path").on("click", async (e) => {
+         const idx = $(e.currentTarget).data("index")
+         flags.saveDCPaths = flags.saveDCPaths || []
+         flags.saveDCPaths.splice(idx, 1)
          await setFlagWithScroll()
       })
 
@@ -404,6 +604,7 @@ export class SiegeActionsUI {
       html.find(".remove-skill").on("click", async (e) => {
          e.preventDefault()
          const confirmed = await foundry.applications.api.DialogV2.confirm({
+            classes: ["siege-v2-dialog"],
             window: { title: tKey("ActionTab.RemoveSkill") },
             content: `<p>${tKey("ActionTab.RemoveSkillConfirm")}</p>`,
             rejectClose: false,
@@ -419,15 +620,17 @@ export class SiegeActionsUI {
          .on("change", async (e) => {
             const row = $(e.currentTarget).closest(".siege-skill-row")
             const idx = row.data("index")
-            const dcVal = row.find(".skill-dc").val()
+            const dcVal = String(row.find(".skill-dc").val() ?? "").trim()
             const isLore = row.find(".skill-name").val() === "lore"
 
             row.find(".lore-name").toggle(isLore)
 
             flags.skills[idx] = {
                name: row.find(".skill-name").val(),
-               loreName: slugify(row.find(".lore-name").val()),
-               dc: dcVal === "" ? "" : parseInt(dcVal),
+               loreName: isLore
+                  ? this._normalizeLoreName(row.find(".lore-name").val())
+                  : "",
+               dc: dcVal,
             }
             await saveFlags()
          })
@@ -462,7 +665,9 @@ export class SiegeActionsUI {
          row.find(".prof-lore-name").toggle(isLore)
          flags.proficiencies[idx] = {
             name: row.find(".prof-name").val(),
-            loreName: slugify(row.find(".prof-lore-name").val()),
+            loreName: isLore
+               ? this._normalizeLoreName(row.find(".prof-lore-name").val())
+               : "",
          }
          await saveFlags()
       })
@@ -470,6 +675,7 @@ export class SiegeActionsUI {
       html.find(".remove-damage-part").on("click", async (e) => {
          e.preventDefault()
          const confirmed = await foundry.applications.api.DialogV2.confirm({
+            classes: ["siege-v2-dialog"],
             window: { title: tKey("ActionTab.RemoveDamagePart") },
             content: `<p>${tKey("ActionTab.RemoveDamageConfirm")}</p>`,
             rejectClose: false,

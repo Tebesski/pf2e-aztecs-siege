@@ -1,0 +1,48 @@
+<div class="siege-lift-dialog" style="margin-bottom: 15px;">
+   <p style="margin-bottom: 5px;"><strong>{{i18n.currentLifters}}</strong></p>
+   <ul style="margin-bottom: 10px;">
+      {{#if lifters.length}}
+         {{#each lifters}}
+            <li>{{this}}</li>
+         {{/each}}
+      {{else}}
+         <li>{{i18n.none}}</li>
+      {{/if}}
+   </ul>
+   <p style="margin-bottom: 15px;"><strong
+         id="lifted-tracker"
+      >{{i18n.bulkLifted}}</strong></p>
+
+   <div style="font-size: 1.1em; margin-bottom: 5px;">
+      <strong>{{i18n.carryingCapacity}}:</strong>
+      <span style="color: orange;">{{i18n.encumberedLabel}}</span>
+      /
+      <span style="color: red;">{{i18n.maxBulkLabel}}</span>
+   </div>
+
+   <div style="font-size: 1.1em; margin-bottom: 10px;">
+      <strong>{{i18n.currentBulk}}:</strong>
+      <span
+         id="lift-cur-bulk"
+         style="font-weight: bold;"
+      >{{capData.otherBulk}}</span>
+      +
+      <span id="lift-add-bulk" style="font-weight: bold;">0</span>
+      =
+      <span
+         id="lift-tot-bulk"
+         style="font-weight: bold;"
+      >{{capData.otherBulk}}</span>
+   </div>
+</div>
+
+<div class="form-group siege-form-group">
+   <label><strong>{{i18n.bulkToLift}}</strong></label>
+   <input
+      type="number"
+      id="lift-bulk-input"
+      value="0"
+      min="0"
+      max="{{maxLift}}"
+   />
+</div>

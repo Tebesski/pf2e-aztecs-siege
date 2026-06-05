@@ -11,17 +11,18 @@
                   </div>
                   <div class="detail-sheet">
                      <div class="detail-small row-nr-1 span-2-columns">
-                        <div class="inputSplit">
-                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Length"}}</label>
-                           <input class="details-input" name="system.details.space.long" type="number" value="{{system.details.space.long}}" />
-                        </div>
-                        <div class="inputSplit">
-                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Width"}}</label>
-                           <input class="details-input" name="system.details.space.wide" type="number" value="{{system.details.space.wide}}" />
-                        </div>
-                        <div class="inputSplit">
-                           <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Height"}}</label>
-                           <input class="details-input" name="system.details.space.high" type="number" value="{{system.details.space.high}}" />
+                        <div class="inputSplit siege-dimensions-field">
+                           <label class="details-label siege-dimensions-label">
+                              {{localize "PF2E-AZTECS-SIEGE.Attributes.Dimensions"}}
+                              <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{localize "PF2E-AZTECS-SIEGE.Sheet.DimensionsTooltip"}}" data-tooltip-direction="UP"></i>
+                           </label>
+                           <div class="details-input siege-dimensions-control" role="group" aria-label="{{localize "PF2E-AZTECS-SIEGE.Attributes.Dimensions"}}">
+                              <input class="siege-dimension-part" data-dimension="long" type="text" inputmode="decimal" value="{{system.details.space.long}}" aria-label="{{localize "PF2E-AZTECS-SIEGE.Attributes.Length"}}" />
+                              <span class="siege-dimensions-separator" aria-hidden="true">/</span>
+                              <input class="siege-dimension-part" data-dimension="wide" type="text" inputmode="decimal" value="{{system.details.space.wide}}" aria-label="{{localize "PF2E-AZTECS-SIEGE.Attributes.Width"}}" />
+                              <span class="siege-dimensions-separator" aria-hidden="true">/</span>
+                              <input class="siege-dimension-part" data-dimension="high" type="text" inputmode="decimal" value="{{system.details.space.high}}" aria-label="{{localize "PF2E-AZTECS-SIEGE.Attributes.Height"}}" />
+                           </div>
                         </div>
                         <div class="inputSplit">
                            <label class="details-label">{{localize "PF2E-AZTECS-SIEGE.Attributes.Price"}}</label>

@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../constants.mjs"
 import { slugify, splitCSV, ensureSiegeRoll, tKey } from "../utils.mjs"
+import { AmmunitionManager } from "./ammunition.mjs"
 
 export class SiegeChatManager {
    static initHooks() {
@@ -29,6 +30,7 @@ export class SiegeChatManager {
                siegeId,
                siegeTokenId,
                originUuid,
+               msg,
             ),
          )
    }
@@ -40,6 +42,7 @@ export class SiegeChatManager {
       siegeId,
       siegeTokenId,
       originUuid,
+      msg = null,
    ) {
       e.preventDefault()
       e.stopPropagation()
@@ -64,8 +67,22 @@ export class SiegeChatManager {
       const actionItem = siege?.items.find(
          (i) => i.type === "action" && i.name === strikeLabel,
       )
-      if (actionItem) {
-         const flag = actionItem.getFlag(MODULE_ID, "siegeAction") || {}
+      const storedRollOptions = msg?.getFlag?.(MODULE_ID, "rollOptions")
+      const storedTraits = msg?.getFlag?.(MODULE_ID, "traits")
+      if (storedRollOptions != null || storedTraits != null) {
+         customOptions.push(...splitCSV(storedRollOptions || ""))
+         splitCSV(storedTraits || "").forEach((t) =>
+            customOptions.push(`trait:${t}`),
+         )
+      } else if (actionItem) {
+         const rawFlag = actionItem.getFlag(MODULE_ID, "siegeAction") || {}
+         const ammoPayload =
+            rawFlag.usesAmmunition !== false
+               ? AmmunitionManager.activeAmmoPayload(siege, actionItem)
+               : null
+         const flag = ammoPayload
+            ? AmmunitionManager.applyAmmoOverridesToFlag(rawFlag, ammoPayload)
+            : rawFlag
          customOptions.push(...splitCSV(flag.rollOptions))
          splitCSV(flag.traits).forEach((t) => customOptions.push(`trait:${t}`))
       }

@@ -44,6 +44,15 @@
    color: #e0e0e0;
    border-top: 1px solid var(--color-border-dark-4);
 }
+.siege-actions-accordion details.siege-action-ignition-blocked {
+   opacity: 0.62;
+}
+.siege-ignition-required {
+   color: #ff5555;
+   font-size: 0.78rem;
+   font-weight: 700;
+   margin: 4px 0 0;
+}
 
 .roll-siege-btn {
    display: inline-flex;
@@ -62,6 +71,277 @@
 .roll-siege-btn:hover {
    background: rgba(255, 255, 255, 0.2);
    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+
+.siege-v2-app,
+.siege-v2-dialog {
+   --siege-cobalt-deep: #0a1a3f;
+   --siege-cobalt-bg: #050d22;
+   --siege-cobalt: #11337a;
+   --siege-cobalt-bright: #2255cc;
+   --siege-cobalt-glow: #4f8cff;
+   --siege-cobalt-line: #2a4f9e;
+   --siege-command-gold: #e8c14a;
+   --siege-command-gold-dark: #6b5410;
+   --siege-text: #eaf1ff;
+   --siege-text-soft: #cfe0ff;
+   --siege-graphite: #17191d;
+}
+.siege-v2-app .window-header,
+.siege-v2-dialog .window-header {
+   background: linear-gradient(160deg, var(--siege-graphite), #05070c);
+   color: var(--siege-text);
+   border-bottom: 1px solid var(--siege-cobalt-line);
+   box-shadow: inset 0 -1px 0 rgba(79, 140, 255, 0.18);
+}
+.siege-v2-app .window-header .window-title,
+.siege-v2-dialog .window-header .window-title {
+   color: var(--siege-text);
+   font-weight: 700;
+   letter-spacing: 0;
+}
+.siege-v2-app .window-header button,
+.siege-v2-dialog .window-header button {
+   background: transparent;
+   color: var(--siege-text-soft);
+   border: 0;
+}
+.siege-v2-app .window-content,
+.siege-v2-dialog .window-content {
+   background: linear-gradient(
+      160deg,
+      var(--siege-cobalt-deep),
+      var(--siege-cobalt-bg)
+   );
+   color: var(--siege-text);
+   border: 1px solid rgba(79, 140, 255, 0.35);
+   border-top: 0;
+   box-shadow: inset 0 0 18px rgba(79, 140, 255, 0.08);
+}
+.siege-v2-app .window-content {
+   padding: 12px;
+}
+.siege-v2-dialog .window-content {
+   padding: 14px;
+}
+.siege-v2-app p,
+.siege-v2-dialog p,
+.siege-v2-app label,
+.siege-v2-dialog label,
+.siege-v2-app strong,
+.siege-v2-dialog strong,
+.siege-v2-app .notes,
+.siege-v2-dialog .notes,
+.siege-v2-app .hint,
+.siege-v2-dialog .hint {
+   color: var(--siege-text);
+}
+.siege-v2-app .notes,
+.siege-v2-dialog .notes,
+.siege-v2-app .hint,
+.siege-v2-dialog .hint {
+   color: var(--siege-text-soft);
+   opacity: 0.9;
+}
+.siege-v2-app a,
+.siege-v2-dialog a {
+   color: var(--siege-cobalt-glow);
+}
+.siege-v2-app ul,
+.siege-v2-dialog ul {
+   color: var(--siege-text);
+}
+.siege-v2-app table,
+.siege-v2-dialog table {
+   color: var(--siege-text);
+   border-collapse: collapse;
+}
+.siege-v2-app th,
+.siege-v2-dialog th {
+   background: rgba(17, 51, 122, 0.45);
+   color: var(--siege-command-gold);
+   border-bottom: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-app td,
+.siege-v2-dialog td {
+   border-bottom: 1px solid rgba(79, 140, 255, 0.18);
+}
+.siege-v2-app hr,
+.siege-v2-dialog hr,
+.siege-v2-app .siege-sep,
+.siege-v2-dialog .siege-sep {
+   border: 0;
+   border-top: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-app input:not([type="checkbox"]):not([type="radio"]),
+.siege-v2-dialog input:not([type="checkbox"]):not([type="radio"]),
+.siege-v2-app select,
+.siege-v2-dialog select,
+.siege-v2-app textarea,
+.siege-v2-dialog textarea {
+   background: rgba(0, 0, 0, 0.32);
+   color: var(--siege-text);
+   border: 1px solid var(--siege-cobalt-bright);
+   border-radius: 4px;
+   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.siege-v2-app input:not([type="checkbox"]):not([type="radio"]):focus,
+.siege-v2-dialog input:not([type="checkbox"]):not([type="radio"]):focus,
+.siege-v2-app select:focus,
+.siege-v2-dialog select:focus,
+.siege-v2-app textarea:focus,
+.siege-v2-dialog textarea:focus {
+   border-color: var(--siege-cobalt-glow);
+   box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.5);
+   outline: none;
+}
+.siege-v2-app option,
+.siege-v2-dialog option,
+.siege-v2-app optgroup,
+.siege-v2-dialog optgroup {
+   background: var(--siege-cobalt-bg);
+   color: var(--siege-text);
+}
+.siege-v2-app input[type="checkbox"],
+.siege-v2-dialog input[type="checkbox"],
+.siege-v2-app input[type="radio"],
+.siege-v2-dialog input[type="radio"] {
+   accent-color: var(--siege-cobalt-glow);
+}
+.siege-v2-app button,
+.siege-v2-dialog button,
+.siege-v2-app .roll-siege-btn,
+.siege-v2-dialog .roll-siege-btn {
+   background: var(--siege-cobalt);
+   color: var(--siege-text);
+   border: 1px solid var(--siege-cobalt-bright);
+   border-radius: 5px;
+   text-shadow: none;
+   transition: filter 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.siege-v2-app button:hover,
+.siege-v2-dialog button:hover,
+.siege-v2-app .roll-siege-btn:hover,
+.siege-v2-dialog .roll-siege-btn:hover {
+   background: var(--siege-cobalt-bright);
+   border-color: var(--siege-cobalt-glow);
+   filter: brightness(1.08);
+   text-shadow: none;
+}
+.siege-v2-app button:disabled,
+.siege-v2-dialog button:disabled,
+.siege-v2-app .roll-siege-btn:disabled,
+.siege-v2-dialog .roll-siege-btn:disabled {
+   filter: grayscale(0.65) brightness(0.65);
+   cursor: not-allowed;
+   opacity: 0.65;
+}
+.siege-v2-dialog .dialog-buttons {
+   gap: 8px;
+   margin-top: 12px;
+   padding-top: 10px;
+   border-top: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-dialog .dialog-buttons button,
+.siege-v2-dialog button.default {
+   background: rgba(107, 84, 16, 0.96);
+   color: #fff3cf;
+   border-color: var(--siege-command-gold);
+}
+.siege-v2-dialog .dialog-buttons button:hover,
+.siege-v2-dialog button.default:hover {
+   background: rgba(135, 106, 22, 0.98);
+   border-color: #fff0a8;
+}
+.siege-v2-dialog .dialog-buttons button[data-action="cancel"] {
+   background: var(--siege-cobalt);
+   color: var(--siege-text);
+   border-color: var(--siege-cobalt-bright);
+}
+.siege-v2-dialog .dialog-buttons button[data-action="cancel"]:hover {
+   background: var(--siege-cobalt-bright);
+   border-color: var(--siege-cobalt-glow);
+}
+.siege-v2-app .siege-section-header,
+.siege-v2-dialog .siege-section-header {
+   color: var(--siege-command-gold);
+   border-bottom: 1px solid rgba(232, 193, 74, 0.45);
+   margin: 12px 0 8px;
+   padding-bottom: 4px;
+   font-weight: 700;
+}
+.siege-v2-app .siege-actions-accordion details,
+.siege-v2-dialog .siege-actions-accordion details {
+   background: rgba(5, 13, 34, 0.9);
+   border: 1px solid var(--siege-cobalt-line);
+   box-shadow: 0 0 10px rgba(79, 140, 255, 0.1);
+}
+.siege-v2-app .siege-actions-accordion summary,
+.siege-v2-dialog .siege-actions-accordion summary {
+   background: linear-gradient(160deg, var(--siege-cobalt), var(--siege-cobalt-deep));
+   color: var(--siege-text);
+}
+.siege-v2-app .siege-actions-accordion summary .chevron,
+.siege-v2-dialog .siege-actions-accordion summary .chevron {
+   color: var(--siege-text-soft);
+}
+.siege-v2-app .siege-actions-accordion .details-body,
+.siege-v2-dialog .siege-actions-accordion .details-body {
+   background: rgba(5, 13, 34, 0.92);
+   color: var(--siege-text);
+   border-top: 1px solid rgba(79, 140, 255, 0.28);
+}
+.siege-v2-app .siege-info-box,
+.siege-v2-dialog .siege-info-box,
+.siege-v2-app .vehicle-penalties,
+.siege-v2-dialog .vehicle-penalties,
+.siege-v2-app .siege-banner,
+.siege-v2-dialog .siege-banner {
+   background: rgba(17, 51, 122, 0.32);
+   border: 1px solid rgba(79, 140, 255, 0.32);
+   border-radius: 5px;
+}
+.siege-v2-app .vehicle-penalties,
+.siege-v2-dialog .vehicle-penalties {
+   padding: 8px;
+}
+.siege-v2-app .siege-banner-error,
+.siege-v2-dialog .siege-banner-error {
+   background: rgba(90, 19, 32, 0.78);
+   border-color: #a8324a;
+   color: #ffd6de;
+}
+.siege-v2-app .siege-banner-warn,
+.siege-v2-dialog .siege-banner-warn {
+   background: rgba(107, 84, 16, 0.45);
+   border-color: var(--siege-command-gold);
+   color: #fff3cf;
+}
+.siege-v2-app .siege-warn,
+.siege-v2-dialog .siege-warn,
+.siege-v2-app .siege-ignition-required,
+.siege-v2-dialog .siege-ignition-required {
+   color: #ff6b6b;
+}
+.siege-actions-app .roll-siege-btn {
+   background: rgba(107, 84, 16, 0.96);
+   color: #fff3cf;
+   border-color: var(--siege-command-gold);
+}
+.siege-actions-app .roll-siege-btn:hover {
+   background: rgba(135, 106, 22, 0.98);
+   border-color: #fff0a8;
+   filter: brightness(1.08);
+}
+.siege-actions-app .siege-exit-vehicle-btn {
+   background: rgba(90, 19, 32, 0.96);
+   color: #ffd6de;
+   border-color: #a8324a;
+}
+.siege-actions-app .siege-exit-vehicle-btn:hover {
+   background: rgba(124, 26, 45, 0.98);
+   border-color: #ff6b86;
 }
 
 .crew-row {
@@ -89,12 +369,28 @@
 .siege-flex-1 {
    flex: 1;
 }
+.tab.siege.siege-tab:not(.active) {
+   display: none !important;
+}
+
+.tab.siege .lore-name,
+.tab.siege .prof-lore-name {
+   min-width: 120px;
+   box-sizing: border-box;
+}
 .siege-input-fixed {
    width: 110px;
    flex: 0 0 110px;
 }
 .siege-input-tiny {
    width: 50px;
+}
+.siege-grid-4 {
+   display: flex;
+   gap: 5px;
+}
+.siege-grid-col {
+   flex: 1;
 }
 .siege-remove-icon {
    flex: 0 0 auto;
@@ -177,6 +473,11 @@
    padding: 5px 10px;
    margin-bottom: 10px;
 }
+.siege-header-alt.siege-ammo-types-header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+}
 .siege-header-alt.siege-header-tight {
    justify-content: flex-start;
    gap: 10px;
@@ -245,6 +546,119 @@
    height: 24px;
    text-align: center;
 }
+.detail-sheet .detail-small.row-nr-1,
+.vehicle-details .detail-small.row-nr-1 {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: flex-start;
+   gap: 7px 8px;
+}
+.detail-sheet .detail-small.row-nr-1 > .inputSplit,
+.detail-sheet .detail-small.row-nr-1 > .siege-bulk-col,
+.vehicle-details .detail-small.row-nr-1 > .inputSplit,
+.vehicle-details .detail-small.row-nr-1 > .siege-bulk-col {
+   flex: 0 0 58px !important;
+   min-width: 50px !important;
+   max-width: 62px !important;
+}
+.detail-sheet .row-nr-2.siege-bulk-row,
+.vehicle-details .row-nr-2.siege-bulk-row {
+   align-items: flex-start;
+   gap: 7px 8px;
+}
+.detail-sheet .row-nr-2.siege-bulk-row .siege-bulk-col,
+.vehicle-details .row-nr-2.siege-bulk-row .siege-bulk-col {
+   flex: 0 0 58px !important;
+   min-width: 50px !important;
+   max-width: 62px !important;
+}
+.siege-stat-grid {
+   display: grid;
+   grid-template-columns: 126px 82px 82px;
+   gap: 7px 8px;
+   width: max-content;
+   max-width: 100%;
+}
+.siege-stat-row {
+   display: contents;
+}
+.siege-stat-row > .siege-stat-field,
+.siege-stat-row > .inputSplit,
+.siege-stat-row > .siege-bulk-col {
+   flex: none !important;
+   min-width: 0 !important;
+   max-width: none !important;
+   width: 100% !important;
+}
+.siege-dimensions-field {
+   flex: none !important;
+   min-width: 0 !important;
+   max-width: none !important;
+   width: 126px !important;
+}
+.siege-stat-row > .siege-dimensions-field {
+   width: 126px !important;
+   min-width: 0 !important;
+   max-width: none !important;
+}
+.siege-stat-row > .siege-stat-field:not(.siege-dimensions-field) .details-input,
+.siege-stat-row > .siege-bulk-col:not(.siege-dimensions-field) .details-input {
+   width: 100% !important;
+   max-width: 100% !important;
+}
+.siege-stat-row > .siege-stat-field .details-label,
+.siege-stat-row > .siege-bulk-col .details-label,
+.siege-stat-row > .inputSplit .details-label {
+   display: flex;
+   align-items: flex-end;
+   min-height: 2.2em;
+   line-height: 1.05;
+   white-space: normal;
+   overflow-wrap: normal;
+   word-break: normal;
+}
+.siege-dimensions-label {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+}
+.siege-dimensions-control {
+   display: flex;
+   align-items: center;
+   box-sizing: border-box;
+   height: 28px;
+   padding: 0 6px;
+   width: 100%;
+   cursor: text;
+}
+.siege-dimension-part {
+   flex: 1 1 0;
+   min-width: 0;
+   width: 3ch;
+   height: 100%;
+   padding: 0;
+   border: 0;
+   outline: 0;
+   background: transparent !important;
+   box-shadow: none !important;
+   text-align: center;
+   color: inherit;
+   font: inherit;
+   font-weight: 700;
+}
+.siege-dimension-part:focus {
+   border: 0;
+   outline: 0;
+   box-shadow: none !important;
+}
+.siege-dimensions-separator {
+   flex: 0 0 auto;
+   padding: 0 2px;
+   user-select: none;
+   pointer-events: none;
+   font-weight: 700;
+   line-height: 1;
+}
 .siege-ammo-types .items {
    list-style: none;
    padding: 0;
@@ -259,12 +673,59 @@
 .siege-bulk-col {
    display: flex;
    flex-direction: column;
-   width: 50%;
+   flex: 1 1 120px;
+   min-width: 110px;
 }
 .siege-bulk-label {
    display: flex;
    align-items: center;
    gap: 4px;
+}
+.siege-load-total-bulk,
+.siege-load-gauge {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   width: 100%;
+   box-sizing: border-box;
+}
+.siege-load-gauge {
+   position: relative;
+   overflow: hidden;
+   min-height: 24px;
+   padding: 0;
+   border: 1px solid rgba(0, 0, 0, 0.25);
+   background: rgba(17, 51, 122, 0.22);
+   font-weight: 700;
+}
+.siege-load-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   width: var(--siege-load-percent, 0%);
+   background: var(--siege-load-color, #2f8f46);
+   box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.16);
+   transition: width 180ms ease, background-color 180ms ease;
+}
+.siege-load-gauge-content {
+   position: relative;
+   z-index: 1;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   width: 100%;
+   padding: 3px 6px;
+   color: #f8f1dc;
+   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+.siege-load-encumbered {
+   color: #fff3cf;
+   border-color: rgba(194, 143, 36, 0.7);
+}
+.siege-load-maxed {
+   color: #ffd6de;
+   border-color: rgba(215, 48, 80, 0.85);
 }
 .siege-weapon-toggle {
    margin-top: 10px;
@@ -272,10 +733,14 @@
    border-top: 1px solid var(--color-border-dark);
    display: flex;
    flex-direction: row;
+   flex-wrap: wrap;
    align-items: center;
-   gap: 8px;
+   gap: 8px 12px;
+   width: 100%;
+   flex: 0 0 100%;
 }
-.siege-mountable-toggle {
+.siege-mountable-toggle,
+.siege-needs-ignition-toggle {
    margin-top: 5px;
    border-top: none;
    padding-top: 0;
@@ -284,18 +749,73 @@
    align-items: center;
    gap: 8px;
 }
+
+.siege-ignition-slugs-input {
+   flex: 1 1 16rem;
+   min-width: 12rem;
+   max-width: 22rem;
+}
+
+.siege-charged-unload-list {
+   display: grid;
+   gap: 0.35rem;
+   margin-top: 0.35rem;
+}
+
+.siege-charged-unload-piece {
+   display: flex;
+   align-items: center;
+   gap: 0.45rem;
+}
+
 .siege-checkbox {
    width: 16px;
    height: 16px;
    margin: 0;
+   flex: 0 0 auto;
 }
 .siege-checkbox-label {
    font-weight: bold;
    cursor: pointer;
    margin: 0;
+   white-space: nowrap;
 }
 .siege-checkbox-label-normal {
    font-weight: normal;
+}
+
+
+.siege-inline-toggle {
+   display: inline-flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 6px;
+   margin-left: auto;
+   padding-left: 12px;
+   border-left: 1px solid var(--color-border-dark);
+}
+.siege-info-icon {
+   opacity: 0.7;
+   cursor: help;
+   font-size: 0.85em;
+}
+.siege-info-icon:hover {
+   opacity: 1;
+}
+
+.siege-drivable-toggle,
+.siege-rotatable-toggle {
+   margin-top: 5px;
+   padding-left: 24px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 8px;
+}
+
+.crew-managed-lock {
+   opacity: 0.6;
+   cursor: not-allowed;
 }
 .action-icon {
    width: 24px;
@@ -372,6 +892,10 @@
    display: flex;
    gap: 5px;
    align-items: center;
+}
+.siege-ammo-rewrite-row input[type="text"] {
+   flex: 1;
+   min-width: 0;
 }
 .siege-prof-label {
    display: flex;
@@ -489,6 +1013,21 @@
    display: flex;
    gap: 10px;
 }
+.siege-vehicle-penalty-row {
+   align-items: center;
+   flex-wrap: wrap;
+}
+.siege-vehicle-penalty-row .siege-inline-label {
+   font-weight: 700;
+   margin-right: 2px;
+}
+.siege-vehicle-penalty-row .veh-penalty-select {
+   flex: 0 0 170px;
+   min-width: 150px;
+}
+.siege-actions-app .siege-action-ammo-types {
+   margin: 6px 0;
+}
 .siege-versatile-row {
    align-items: center;
    flex-wrap: wrap;
@@ -529,4 +1068,2267 @@
 }
 .siege-ability-template {
    margin-top: 5px;
+}
+
+
+.siege-crew-hud-app {
+   --cobalt-deep: #0a1a3f;
+   --cobalt: #11337a;
+   --cobalt-bright: #2255cc;
+   --cobalt-glow: #4f8cff;
+   --cobalt-line: #2a4f9e;
+   --crew-yellow: #e8c14a;
+   --slant: 22px; 
+}
+.siege-crew-hud-app .window-content {
+   padding: 0;
+   
+
+   background: #050d22;
+   overflow: hidden;
+   height: 100%;
+}
+.siege-crew-hud {
+   position: relative;
+   width: 100%;
+   height: 100%;
+   min-height: 200px;
+}
+
+
+.siege-crew-hud .crew-scroll {
+   width: 100%;
+   height: 100%;
+   overflow: hidden;
+}
+.siege-crew-hud .crew-cards {
+   display: flex;
+   flex-direction: row;
+   height: 100%;
+   min-width: 100%;
+   background: #050d22;
+   transition: transform 0.3s ease;
+}
+.siege-crew-hud .crew-empty {
+   color: #cfe0ff;
+   padding: 36px;
+   text-align: center;
+   font-style: italic;
+   width: 100%;
+}
+
+
+
+
+.siege-crew-hud .crew-card {
+   position: relative;
+   flex: 1 1 0;
+   min-width: 56px;
+   height: 100%;
+   margin-left: calc(var(--slant) * -1);
+   transition: flex-grow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+   animation: crew-card-in 0.35s ease both;
+}
+@keyframes crew-card-in {
+   from {
+      opacity: 0;
+      transform: translateY(8px);
+   }
+   to {
+      opacity: 1;
+      transform: translateY(0);
+   }
+}
+.siege-crew-hud .crew-card:first-child {
+   margin-left: 0;
+}
+.siege-crew-hud .crew-card:hover,
+.siege-crew-hud .crew-card-expanded {
+   flex-grow: 2.6;
+   z-index: 5;
+}
+
+.siege-crew-hud .crew-cards:has(.crew-card:hover) .crew-card:not(:hover) .crew-card-inner::after {
+   content: "";
+   position: absolute;
+   inset: 0;
+   background: rgba(0, 0, 0, 0.4);
+   pointer-events: none;
+   z-index: 1;
+}
+.siege-crew-hud .crew-card-inner {
+   position: absolute;
+   inset: 0;
+   overflow: hidden;
+   background: #050d22;
+   clip-path: polygon(
+      var(--slant) 0,
+      100% 0,
+      calc(100% - var(--slant)) 100%,
+      0 100%
+   );
+}
+
+.siege-crew-hud .crew-card-first .crew-card-inner {
+   clip-path: polygon(0 0, 100% 0, calc(100% - var(--slant)) 100%, 0 100%);
+}
+
+.siege-crew-hud .crew-card-last {
+   margin-right: calc(var(--slant) * -1);
+   padding-right: var(--slant);
+}
+.siege-crew-hud .crew-card-last .crew-card-inner {
+   clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+
+.siege-crew-hud .crew-card:not(.crew-card-first):not(.crew-card-expanded)
+   .crew-card-inner::before {
+   content: "";
+   position: absolute;
+   top: -10%;
+   left: calc(var(--slant) - 2px);
+   width: 2px;
+   height: 120%;
+   background: var(--cobalt-line);
+   transform: skewX(-11deg);
+   transform-origin: top;
+   pointer-events: none;
+   z-index: 2;
+}
+
+.siege-crew-hud .crew-card-expanded {
+   margin: 0;
+   padding: 0;
+}
+.siege-crew-hud .crew-card-expanded .crew-card-inner {
+   clip-path: none;
+}
+.siege-crew-hud .crew-card-portrait {
+   position: absolute;
+   
+
+
+
+   top: -40px;
+   bottom: -40px;
+   left: calc(var(--slant) * -1 - 40px);
+   right: calc(var(--slant) * -1 - 40px);
+   background-size: cover;
+   background-position: center;
+   background-repeat: no-repeat;
+   cursor: pointer;
+}
+.siege-crew-hud .crew-card-expanded .crew-card-portrait {
+   left: -40px;
+   right: -40px;
+}
+
+
+.siege-crew-hud .crew-card-actions {
+   position: absolute;
+   left: 0;
+   top: 50%;
+   transform: translate(-120%, -50%);
+   display: flex;
+   flex-direction: column;
+   gap: 7px;
+   padding: 8px 8px 8px calc(var(--slant) + 6px);
+   opacity: 0;
+   pointer-events: none;
+   transition: transform 0.3s ease, opacity 0.25s ease;
+   z-index: 4;
+}
+.siege-crew-hud .crew-card:hover .crew-card-actions,
+.siege-crew-hud .crew-card-expanded .crew-card-actions {
+   transform: translate(0, -50%);
+   opacity: 1;
+   pointer-events: auto;
+}
+.siege-crew-hud .crew-card-btn {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   width: 32px;
+   height: 32px;
+   background: rgba(17, 51, 122, 0.9);
+   color: #eaf1ff;
+   border: 1px solid var(--cobalt-bright);
+   border-radius: 5px;
+   cursor: pointer;
+   font-size: 0.9rem;
+   transition: filter 0.12s ease;
+}
+.siege-crew-hud .crew-card-btn:hover:not(:disabled) {
+   
+   filter: brightness(1.2);
+}
+.siege-crew-hud .crew-card-btn:disabled {
+   opacity: 0.5;
+   cursor: default;
+}
+.siege-crew-hud .crew-exit-btn {
+   background: rgba(90, 19, 32, 0.9);
+   border-color: #a8324a;
+}
+
+
+
+.siege-crew-hud .crew-portrait-btn {
+   position: absolute;
+   top: 8px;
+   right: 10px;
+   width: 26px;
+   height: 20px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: rgba(107, 84, 16, 0.92);
+   border: 1px solid var(--crew-yellow);
+   color: #fff3cf;
+   border-radius: 4px;
+   font-size: 0.75rem;
+   cursor: pointer;
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity 0.25s ease, filter 0.12s ease;
+   z-index: 6;
+}
+.siege-crew-hud .crew-card:hover .crew-portrait-btn,
+.siege-crew-hud .crew-card-expanded .crew-portrait-btn {
+   opacity: 1;
+   pointer-events: auto;
+}
+
+
+.siege-crew-hud .crew-card-last .crew-portrait-btn {
+   right: calc(var(--slant) + 12px);
+}
+.siege-crew-hud .crew-portrait-btn:hover {
+   filter: brightness(1.2);
+}
+
+
+.siege-crew-hud .crew-card-position {
+   position: absolute;
+   bottom: 6px;
+   left: 50%;
+   transform: translateX(-50%);
+   z-index: 3;
+   width: 32px;
+   height: 32px;
+   border-radius: 7px;
+   background: rgba(5, 13, 34, 0.92);
+   border: 1px solid var(--cobalt-glow);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   overflow: hidden;
+}
+.siege-crew-hud .crew-card-position img {
+   width: 23px;
+   height: 23px;
+   object-fit: contain;
+}
+
+
+
+.siege-crew-hud .crew-card-rank {
+   position: absolute;
+   bottom: 44px;
+   left: 50%;
+   transform: translateX(-50%);
+   z-index: 3;
+   width: 30px;
+   height: 30px;
+   border-radius: 7px;
+   background: rgba(5, 13, 34, 0.92);
+   border: 1px solid var(--cobalt-glow);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   overflow: hidden;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-crew-hud .crew-card-rank:hover {
+   filter: brightness(1.3);
+}
+.siege-crew-hud .crew-card-rank img {
+   width: 22px;
+   height: 22px;
+   object-fit: contain;
+}
+
+
+.siege-crew-hud .crew-scroll-arrow {
+   position: absolute;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 34px;
+   height: 60px;
+   background: rgba(10, 26, 63, 0.55);
+   border: 1px solid var(--cobalt-glow);
+   color: #eaf1ff;
+   border-radius: 6px;
+   cursor: pointer;
+   z-index: 6;
+}
+.siege-crew-hud .crew-scroll-arrow-left {
+   left: 6px;
+}
+.siege-crew-hud .crew-scroll-arrow-right {
+   right: 6px;
+}
+.siege-crew-hud .crew-scroll-arrow:hover {
+   background: rgba(34, 85, 204, 0.75);
+}
+.control-icon.siege-crew-hud-toggle {
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   box-sizing: border-box;
+}
+.control-icon.siege-crew-hud-toggle i {
+   color: var(--cobalt-edge, #74a9ff);
+   margin: 0;
+}
+
+
+.siege-actions-hotkey-panel-app {
+   --cobalt-deep: #0a1a3f;
+   --cobalt-bright: #2255cc;
+   --cobalt-glow: #4f8cff;
+   --crew-yellow: #e8c14a;
+   z-index: 10000;
+   pointer-events: auto;
+   opacity: 0;
+   transform: translateX(-10px) scale(0.96);
+   transform-origin: left center;
+   transition: opacity 0.11s ease-out, transform 0.11s ease-out;
+   will-change: opacity, transform;
+}
+.siege-actions-hotkey-panel-app.sah-visible {
+   opacity: 1;
+   transform: translateX(0) scale(1);
+}
+.siege-actions-hotkey-panel-app.sah-closing {
+   opacity: 0;
+   transform: translateX(-10px) scale(0.96);
+   pointer-events: none;
+}
+.siege-actions-hotkey-panel-app,
+.siege-actions-hotkey-panel-app .window-content {
+   padding: 0;
+   overflow: visible;
+   background: transparent;
+   border: 0;
+   box-shadow: none;
+}
+.sah-wrap {
+   position: relative;
+   display: flex;
+   align-items: stretch;
+   width: max-content;
+   user-select: none;
+}
+.sah-drag-stub {
+   position: relative;
+   z-index: 3;
+   width: 18px;
+   flex: 0 0 18px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border: 1px solid #4c5563;
+   border-right: 0;
+   border-radius: 7px 0 0 7px;
+   background: linear-gradient(180deg, #30343b 0%, #17191d 100%);
+   color: #aeb6c3;
+   cursor: grab;
+   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08);
+}
+.sah-drag-stub:active,
+.siege-actions-hotkey-panel-app.sah-dragging .sah-drag-stub {
+   cursor: grabbing;
+}
+.sah-panel {
+   position: relative;
+   z-index: 2;
+   background: rgba(5, 13, 34, 0.94);
+   border: 1px solid var(--cobalt-glow);
+   border-radius: 0 7px 7px 0;
+   box-shadow: 0 0 14px rgba(79, 140, 255, 0.22);
+   padding: 8px;
+}
+.sah-slots {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   min-height: 50px;
+}
+.sah-slot {
+   position: relative;
+   width: 50px;
+   height: 50px;
+   flex: 0 0 50px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 0;
+   border: 1px solid var(--cobalt-bright);
+   border-radius: 5px;
+   background: rgba(17, 51, 122, 0.92);
+   color: #eaf1ff;
+   cursor: pointer;
+   overflow: hidden;
+}
+.sah-slot:hover {
+   filter: brightness(1.18);
+}
+.sah-slot img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+}
+.sah-slot-blocked {
+   filter: grayscale(0.85) brightness(0.65);
+}
+.sah-slot-blocked::after {
+   content: "!";
+   position: absolute;
+   right: 4px;
+   bottom: 2px;
+   color: #ff6b6b;
+   font-weight: 800;
+   text-shadow: 0 1px 2px #000;
+}
+.sah-number {
+   position: absolute;
+   left: 3px;
+   top: 2px;
+   z-index: 2;
+   min-width: 15px;
+   height: 15px;
+   line-height: 15px;
+   text-align: center;
+   border-radius: 4px;
+   background: rgba(5, 13, 34, 0.9);
+   color: var(--crew-yellow);
+   font-size: 0.68rem;
+   font-weight: 700;
+}
+.sah-label {
+   position: absolute;
+   left: 2px;
+   right: 2px;
+   bottom: 2px;
+   z-index: 2;
+   padding: 1px 2px;
+   border-radius: 3px;
+   background: rgba(5, 13, 34, 0.78);
+   color: #eaf1ff;
+   font-size: 0.52rem;
+   line-height: 1;
+   text-align: center;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+.sah-remove {
+   position: absolute;
+   right: 2px;
+   top: 2px;
+   z-index: 3;
+   width: 15px;
+   height: 15px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border-radius: 4px;
+   background: rgba(90, 19, 32, 0.92);
+   color: #ffd6de;
+   font-size: 0.62rem;
+   opacity: 0;
+   pointer-events: none;
+}
+.sah-slot:hover .sah-remove {
+   opacity: 1;
+   pointer-events: auto;
+}
+.sah-add-stub {
+   position: absolute;
+   left: 100%;
+   top: 5px;
+   bottom: auto;
+   z-index: 1;
+   width: 28px;
+   min-height: 3.9em;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   border: 1px solid var(--crew-yellow);
+   border-radius: 0 3px 3px 0;
+   border-left: 0;
+   background: rgba(107, 84, 16, 0.92);
+   color: #fff3cf;
+   cursor: pointer;
+   font-size: 0.95rem;
+   opacity: 1;
+   pointer-events: auto;
+   transform: translateX(-22px);
+   transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), filter 0.12s ease;
+}
+.sah-add-stub:hover,
+.sah-add-stub:focus,
+.sah-add-stub:focus-visible {
+   transform: translateX(0);
+}
+.sah-add-stub:hover,
+.sah-add-stub:focus {
+   filter: brightness(1.16);
+}
+.sah-add-menu {
+   position: absolute;
+   left: calc(100% + 34px);
+   top: 0;
+   min-width: 210px;
+   max-width: 240px;
+   max-height: 260px;
+   overflow-y: auto;
+   padding: 6px;
+   border: 1px solid var(--crew-yellow);
+   border-radius: 7px;
+   background: rgba(5, 13, 34, 0.97);
+   box-shadow: 0 0 14px rgba(79, 140, 255, 0.22);
+}
+.sah-add-menu-item {
+   width: 100%;
+   min-height: 34px;
+   display: grid;
+   grid-template-columns: 32px minmax(0, 1fr);
+   align-items: center;
+   column-gap: 7px;
+   margin: 0 0 5px;
+   padding: 4px 7px;
+   border-radius: 5px;
+   border: 1px solid var(--crew-yellow);
+   background: rgba(107, 84, 16, 0.92);
+   color: #fff3cf;
+   cursor: pointer;
+   text-align: left;
+}
+.sah-add-menu-item:last-child {
+   margin-bottom: 0;
+}
+.sah-add-menu-item:hover {
+   filter: brightness(1.16);
+}
+.sah-add-menu-item img {
+   width: 24px;
+   height: 24px;
+   object-fit: cover;
+   border-radius: 4px;
+   justify-self: center;
+}
+.sah-add-menu-item span {
+   display: block;
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+.sah-empty {
+   color: #cfe0ff;
+   font-size: 0.85rem;
+   padding: 0 8px;
+}
+
+
+.siege-crew-portrait-app .window-content {
+   background: linear-gradient(160deg, #0a1a3f, #050d22);
+   padding: 14px;
+}
+.siege-crew-portrait {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   color: #eaf1ff;
+}
+.siege-crew-portrait .scp-row {
+   display: flex;
+   gap: 8px;
+   align-items: center;
+}
+.siege-crew-portrait .scp-path {
+   flex: 1;
+   background: rgba(0, 0, 0, 0.3);
+   color: #cfe0ff;
+   border: 1px solid #2255cc;
+   border-radius: 4px;
+   padding: 4px 6px;
+   font-size: 0.8rem;
+}
+.siege-crew-portrait .scp-pick,
+.siege-crew-portrait .scp-buttons button {
+   background: #11337a;
+   color: #eaf1ff;
+   border: 1px solid #2255cc;
+   border-radius: 5px;
+   padding: 6px 10px;
+   cursor: pointer;
+}
+.siege-crew-portrait .scp-pick:hover,
+.siege-crew-portrait .scp-buttons button:hover {
+   background: #2255cc;
+}
+.siege-crew-portrait .scp-preview-wrap {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 6px;
+}
+.siege-crew-portrait .scp-preview {
+   position: relative;
+   width: 170px;
+   height: 230px;
+}
+.siege-crew-portrait .scp-preview .crew-card-inner {
+   position: absolute;
+   inset: 0;
+   overflow: hidden;
+   border: 2px solid #4f8cff;
+   clip-path: polygon(22px 0, 100% 0, calc(100% - 22px) 100%, 0 100%);
+}
+.siege-crew-portrait .scp-preview-portrait {
+   position: absolute;
+   inset: 0;
+   background-repeat: no-repeat;
+   cursor: grab;
+   touch-action: none;
+}
+.siege-crew-portrait .scp-preview-portrait:active {
+   cursor: grabbing;
+}
+.siege-crew-portrait .scp-hint {
+   font-size: 0.75rem;
+   opacity: 0.7;
+}
+.siege-crew-portrait .scp-controls {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-crew-portrait .scp-controls label {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   font-size: 0.85rem;
+}
+
+.siege-crew-portrait .scp-allveh {
+   width: fit-content;
+   cursor: pointer;
+}
+.siege-crew-portrait .scp-allveh input[type="checkbox"] {
+   cursor: pointer;
+}
+.scp-dim-hint {
+   font-size: 0.72rem;
+   opacity: 0.7;
+   margin: 2px 0 0;
+}
+.scp-dim-hint i {
+   color: #74a9ff;
+   margin-right: 4px;
+}
+.siege-crew-portrait .scp-controls input[type="range"] {
+   flex: 1;
+}
+.siege-crew-portrait .scp-fit {
+   background: rgba(0, 0, 0, 0.3);
+   color: #eaf1ff;
+   border: 1px solid #2255cc;
+   border-radius: 4px;
+   padding: 3px 6px;
+}
+.siege-crew-portrait .scp-buttons {
+   display: flex;
+   gap: 8px;
+   justify-content: flex-end;
+}
+
+
+
+
+.siege-crew-hud-app,
+.siege-vehicle-hud-app {
+   overflow: visible;
+}
+.crew-bookmarks {
+   position: absolute;
+   left: 100%;
+   top: 40px;
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   z-index: 7;
+}
+.crew-bookmark {
+   width: 34px;
+   height: 46px;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #cfe0ff;
+   border: 1px solid #2a4f9e;
+   border-left: none;
+   border-radius: 0 8px 8px 0;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 1rem;
+   transition: filter 0.12s ease;
+}
+.crew-bookmark:hover:not(:disabled) {
+   filter: brightness(1.3);
+}
+.crew-bookmark-active {
+   background: linear-gradient(160deg, #2255cc, #11337a);
+   color: #fff;
+   border-color: #4f8cff;
+   box-shadow: 2px 0 6px rgba(79, 140, 255, 0.4);
+}
+.crew-bookmark:disabled {
+   opacity: 0.55;
+   cursor: default;
+}
+
+
+.siege-crew-dossier-app .window-content {
+   background: linear-gradient(160deg, #0a1a3f, #050d22);
+   padding: 0;
+}
+.siege-crew-dossier {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   color: #eaf1ff;
+   padding: 14px;
+}
+.siege-crew-dossier .scd-header {
+   display: flex;
+   gap: 12px;
+   align-items: center;
+   border-bottom: 1px solid #2a4f9e;
+   padding-bottom: 12px;
+}
+.siege-crew-dossier .scd-portrait {
+   position: relative;
+   width: 84px;
+   height: 110px;
+   flex: 0 0 auto;
+   border: 2px solid #4f8cff;
+   border-radius: 6px;
+   overflow: hidden;
+   box-shadow: 0 0 8px rgba(79, 140, 255, 0.35);
+}
+.siege-crew-dossier .scd-portrait-img {
+   display: block;
+}
+.siege-crew-dossier .scd-id {
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+.siege-crew-dossier .scd-name {
+   font-size: 1.3rem;
+   font-weight: 700;
+   color: #fff;
+}
+.siege-crew-dossier .scd-pos {
+   color: #74a9ff;
+   font-weight: 600;
+}
+.siege-crew-dossier .scd-vehicle {
+   font-size: 0.85rem;
+   opacity: 0.7;
+   font-style: italic;
+}
+.siege-crew-dossier .scd-section-title {
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+   font-size: 0.72rem;
+   color: #74a9ff;
+   margin-bottom: 5px;
+}
+.siege-crew-dossier .scd-hp-bar {
+   position: relative;
+   width: 100%;
+   height: 22px;
+   background: rgba(0, 0, 0, 0.4);
+   border: 1px solid #2a4f9e;
+   border-radius: 5px;
+   overflow: hidden;
+}
+.siege-crew-dossier .scd-hp-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   transition: width 0.3s ease;
+}
+.siege-crew-dossier .scd-hp-text {
+   position: absolute;
+   inset: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 0.8rem;
+   font-weight: 600;
+   text-shadow: 0 1px 2px #000;
+}
+.siege-crew-dossier .scd-actions {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+.siege-crew-dossier .scd-actions li {
+   background: rgba(17, 51, 122, 0.4);
+   border: 1px solid #1d3a73;
+   border-radius: 4px;
+   padding: 5px 8px;
+   font-size: 0.9rem;
+}
+.siege-crew-dossier .scd-actions li i {
+   color: #4f8cff;
+   margin-right: 6px;
+}
+.siege-crew-dossier .scd-actions .scd-none {
+   opacity: 0.6;
+   font-style: italic;
+   background: transparent;
+   border: none;
+}
+
+
+.siege-vehicle-hud-app .window-content {
+   background: linear-gradient(160deg, #0a1a3f, #050d22);
+   padding: 14px;
+}
+.siege-vehicle-hud {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   color: #eaf1ff;
+   height: 100%;
+}
+.siege-vehicle-hud .vh-toggle-row label {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   font-size: 0.95rem;
+   font-weight: 600;
+   width: fit-content;
+   cursor: pointer;
+}
+.siege-vehicle-hud .vh-ranks-toggle {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: fit-content;
+   cursor: pointer;
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-ranks-toggle input[type="checkbox"],
+.siege-vehicle-hud .vh-toggle-row input[type="checkbox"] {
+   cursor: pointer;
+}
+.siege-vehicle-hud .vh-accordion {
+   border: 1px solid #2a4f9e;
+   border-radius: 6px;
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   min-height: 0;
+}
+.siege-vehicle-hud .vh-accordion-head {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: 100%;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #eaf1ff;
+   border: none;
+   padding: 8px 10px;
+   font-size: 0.9rem;
+   font-weight: 600;
+   cursor: pointer;
+   text-align: left;
+}
+.siege-vehicle-hud .vh-accordion-head:hover {
+   filter: brightness(1.15);
+}
+.siege-vehicle-hud .vh-accordion-body {
+   padding: 10px;
+   overflow-y: auto;
+   max-height: 320px;
+}
+.siege-vehicle-hud .vh-ranks-list {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-rank-row {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 5px;
+   padding: 5px 7px;
+}
+.siege-vehicle-hud .vh-rank-icon {
+   width: 30px;
+   height: 30px;
+   object-fit: contain;
+   border-radius: 4px;
+   cursor: pointer;
+   flex: 0 0 auto;
+   background: rgba(0, 0, 0, 0.25);
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-rank-icon:hover {
+   filter: brightness(1.2);
+}
+.siege-vehicle-hud .vh-rank-name {
+   flex: 1 1 auto;
+   min-width: 60px;
+   background: rgba(0, 0, 0, 0.3);
+   color: #eaf1ff;
+   border: 1px solid #2255cc;
+   border-radius: 4px;
+   padding: 4px 6px;
+   font-size: 0.85rem;
+}
+.siege-vehicle-hud .vh-rank-abbr {
+   flex: 0 0 70px;
+   width: 70px;
+   background: rgba(0, 0, 0, 0.3);
+   color: #cfe0ff;
+   border: 1px solid #2255cc;
+   border-radius: 4px;
+   padding: 4px 6px;
+   font-size: 0.85rem;
+}
+.siege-vehicle-hud .vh-rank-del {
+   flex: 0 0 auto;
+   width: 28px;
+   height: 28px;
+   background: rgba(90, 19, 32, 0.85);
+   border: 1px solid #a8324a;
+   border-radius: 4px;
+   color: #ffd9df;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-rank-del:hover {
+   filter: brightness(1.2);
+}
+.siege-vehicle-hud .vh-ranks-actions {
+   display: flex;
+   gap: 8px;
+   margin-top: 10px;
+}
+.siege-vehicle-hud .vh-add-rank,
+.siege-vehicle-hud .vh-reset-ranks {
+   background: #11337a;
+   color: #eaf1ff;
+   border: 1px solid #2255cc;
+   border-radius: 5px;
+   padding: 6px 10px;
+   cursor: pointer;
+   font-size: 0.85rem;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-add-rank:hover,
+.siege-vehicle-hud .vh-reset-ranks:hover {
+   filter: brightness(1.15);
+}
+.siege-vehicle-hud .vh-empty {
+   opacity: 0.65;
+   font-style: italic;
+   font-size: 0.85rem;
+   text-align: center;
+   padding: 10px;
+}
+
+
+.siege-vehicle-hud-app .window-content {
+   background: linear-gradient(160deg, #0a1a3f, #050d22);
+   padding: 0;
+}
+.siege-vehicle-hud {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   gap: 0;
+}
+.siege-vehicle-hud .vh-nav {
+   display: flex;
+   flex-direction: row;
+   gap: 2px;
+   padding: 8px 10px 0;
+   border-bottom: 1px solid #2a4f9e;
+   flex-wrap: wrap;
+}
+.siege-vehicle-hud .vh-tab {
+   background: rgba(17, 51, 122, 0.4);
+   color: #cfe0ff;
+   border: 1px solid #1d3a73;
+   border-bottom: none;
+   border-radius: 6px 6px 0 0;
+   padding: 6px 12px;
+   font-size: 0.85rem;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   transition: filter 0.12s ease, background 0.12s ease;
+}
+.siege-vehicle-hud .vh-tab:hover {
+   filter: brightness(1.25);
+}
+.siege-vehicle-hud .vh-tab.active {
+   background: linear-gradient(160deg, #2255cc, #11337a);
+   color: #fff;
+   border-color: #4f8cff;
+}
+.siege-vehicle-hud .vh-body {
+   flex: 1 1 auto;
+   overflow-y: auto;
+   padding: 14px;
+   color: #eaf1ff;
+}
+
+
+.siege-vehicle-hud .vh-details {
+   display: flex;
+   gap: 16px;
+   align-items: flex-start;
+}
+.siege-vehicle-hud .vh-portrait-wrap {
+   position: relative;
+   flex: 0 0 auto;
+   width: 180px;
+   height: 180px;
+}
+.siege-vehicle-hud .vh-portrait {
+   position: relative;
+   width: 180px;
+   height: 180px;
+   border: 2px solid #4f8cff;
+   border-radius: 8px;
+   overflow: hidden;
+   box-shadow: 0 0 10px rgba(79, 140, 255, 0.35);
+}
+.siege-vehicle-hud .vh-portrait-img {
+   display: block;
+}
+.siege-vehicle-hud .vh-edit-portrait {
+   position: absolute;
+   top: 8px;
+   right: 8px;
+   width: 32px;
+   height: 32px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: rgba(17, 51, 122, 0.92);
+   border: 1px solid #4f8cff;
+   border-radius: 6px;
+   color: #eaf1ff;
+   cursor: pointer;
+   z-index: 3;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-edit-portrait:hover {
+   filter: brightness(1.3);
+}
+.siege-vehicle-hud .vh-stats {
+   flex: 1 1 auto;
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 6px 16px;
+}
+.siege-vehicle-hud .vh-stat {
+   display: flex;
+   justify-content: space-between;
+   border-bottom: 1px solid #1d3a73;
+   padding: 4px 2px;
+}
+.siege-vehicle-hud .vh-stat-k {
+   color: #74a9ff;
+   font-size: 0.85rem;
+}
+.siege-vehicle-hud .vh-stat-v {
+   font-weight: 600;
+}
+
+
+.siege-vehicle-hud .vh-actions-list,
+.siege-vehicle-hud .vh-ammo-list,
+.siege-vehicle-hud .vh-crew-list,
+.siege-vehicle-hud .vh-stash-list {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-vehicle-hud .vh-action,
+.siege-vehicle-hud .vh-weapon,
+.siege-vehicle-hud .vh-stash-item {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   padding: 8px 10px;
+}
+.siege-vehicle-hud .vh-action-icon,
+.siege-vehicle-hud .vh-weapon-icon,
+.siege-vehicle-hud .vh-stash-icon {
+   width: 36px;
+   height: 36px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.25);
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-action-body,
+.siege-vehicle-hud .vh-weapon-body,
+.siege-vehicle-hud .vh-stash-body {
+   flex: 1 1 auto;
+}
+.siege-vehicle-hud .vh-action-name,
+.siege-vehicle-hud .vh-weapon-name,
+.siege-vehicle-hud .vh-stash-name {
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-action-access,
+.siege-vehicle-hud .vh-weapon-ammo {
+   font-size: 0.8rem;
+   color: #9fc0ff;
+}
+.siege-vehicle-hud .vh-weapon-count {
+   font-weight: 700;
+   font-size: 0.95rem;
+   color: #eaf1ff;
+   margin-right: 4px;
+}
+.siege-vehicle-hud .vh-weapon-btns {
+   display: flex;
+   gap: 4px;
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-weapon-btn {
+   background: #11337a;
+   border: 1px solid #2255cc;
+   color: #eaf1ff;
+   border-radius: 5px;
+   width: 30px;
+   height: 30px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   font-size: 0.85rem;
+   transition: filter 0.12s ease;
+   padding: 0;
+}
+.siege-vehicle-hud .vh-weapon-btn:hover:not(:disabled) {
+   filter: brightness(1.25);
+}
+.siege-vehicle-hud .vh-weapon-btn:disabled {
+   opacity: 0.45;
+   cursor: default;
+}
+
+
+.siege-vehicle-hud .vh-stash-qty {
+   color: #9fc0ff;
+   font-size: 0.85rem;
+   margin-right: 6px;
+}
+.siege-vehicle-hud .vh-stash-take {
+   color: #74a9ff;
+   font-size: 1.1rem;
+   cursor: pointer;
+   text-decoration: none;
+   flex: 0 0 auto;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-take:hover {
+   filter: brightness(1.4);
+}
+.siege-vehicle-hud .vh-stash-add {
+   margin-top: 10px;
+}
+.siege-vehicle-hud .vh-stash-add button {
+   background: #11337a;
+   border: 1px solid #2255cc;
+   color: #eaf1ff;
+   border-radius: 5px;
+   padding: 6px 10px;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-add button:hover {
+   filter: brightness(1.25);
+}
+
+
+.siege-vehicle-hud .vh-crew-section {
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   overflow: hidden;
+}
+.siege-vehicle-hud .vh-crew-head {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   padding: 6px 10px;
+}
+.siege-vehicle-hud .vh-crew-title {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   flex-wrap: wrap;
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-crew-cap {
+   color: #9fc0ff;
+   font-size: 0.8rem;
+}
+.siege-vehicle-hud .vh-pos-info {
+   background: none;
+   border: none;
+   color: #74a9ff;
+   cursor: pointer;
+   font-size: 1rem;
+}
+.siege-vehicle-hud .vh-pos-info:hover {
+   filter: brightness(1.3);
+}
+.siege-vehicle-hud .vh-crew-members {
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+   padding: 8px 10px;
+}
+.siege-vehicle-hud .vh-crew-member {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 5px 8px;
+   background: rgba(17, 51, 122, 0.3);
+   border: 1px solid #1d3a73;
+   border-radius: 5px;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-crew-member:hover {
+   filter: brightness(1.25);
+}
+.siege-vehicle-hud .vh-crew-rank {
+   width: 22px;
+   height: 22px;
+   object-fit: contain;
+}
+.siege-vehicle-hud .vh-crew-empty,
+.siege-vehicle-hud .vh-empty {
+   opacity: 0.6;
+   font-style: italic;
+   font-size: 0.85rem;
+   padding: 6px;
+}
+.siege-vehicle-hud .vh-description {
+   line-height: 1.5;
+}
+
+
+.siege-vehicle-hud .vh-ranks {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+}
+
+
+.siege-crew-dossier .scd-actions {
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
+}
+.siege-crew-dossier .scd-acc {
+   border: 1px solid #1d3a73;
+   border-radius: 5px;
+   overflow: hidden;
+}
+.siege-crew-dossier .scd-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: 100%;
+   background: rgba(17, 51, 122, 0.4);
+   color: #eaf1ff;
+   border: none;
+   padding: 6px 8px;
+   cursor: pointer;
+   text-align: left;
+   transition: filter 0.12s ease;
+}
+.siege-crew-dossier .scd-acc-head:hover {
+   filter: brightness(1.2);
+}
+.siege-crew-dossier .scd-acc-icon {
+   width: 24px;
+   height: 24px;
+   object-fit: contain;
+   flex: 0 0 auto;
+}
+.siege-crew-dossier .scd-acc-name {
+   flex: 1 1 auto;
+   font-weight: 600;
+   min-width: 0;
+   display: inline-flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-crew-dossier .scd-acc-name .siege-action-title-text {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-crew-dossier .scd-acc-caret {
+   color: #74a9ff;
+}
+.siege-crew-dossier .scd-acc-body {
+   padding: 8px 10px;
+   background: rgba(0, 0, 0, 0.25);
+}
+.siege-crew-dossier .scd-act-row {
+   display: flex;
+   justify-content: space-between;
+   gap: 10px;
+   padding: 2px 0;
+   font-size: 0.85rem;
+}
+.siege-crew-dossier .scd-act-k {
+   color: #74a9ff;
+}
+.siege-crew-dossier .scd-act-desc {
+   margin-top: 6px;
+   font-size: 0.82rem;
+   line-height: 1.4;
+   opacity: 0.9;
+}
+.siege-crew-dossier .scd-skill-badges {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
+}
+.siege-crew-dossier .scd-skill-badge {
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #eaf1ff;
+   border: 1px solid #2a4f9e;
+   border-radius: 14px;
+   padding: 4px 12px;
+   font-size: 0.85rem;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-crew-dossier .scd-skill-badge:hover {
+   filter: brightness(1.3);
+}
+.siege-crew-dossier .scd-skill-badge .scd-skill-mod {
+   color: #9fc0ff;
+   font-weight: 700;
+   margin-left: 4px;
+}
+.siege-crew-dossier .scd-rank-assign,
+.siege-crew-dossier .scd-rank-change {
+   color: #74a9ff;
+   cursor: pointer;
+   text-decoration: underline;
+   font-size: 0.85rem;
+}
+.siege-crew-dossier .scd-rank-assign:hover,
+.siege-crew-dossier .scd-rank-change:hover {
+   filter: brightness(1.3);
+}
+
+
+.siege-vehicle-hud .vh-details-left {
+   flex: 0 0 auto;
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   width: 180px;
+}
+.siege-vehicle-hud .vh-combat {
+   display: flex;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-combat-cell {
+   flex: 1;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   border: 1px solid #2a4f9e;
+   border-radius: 6px;
+   padding: 6px 4px;
+   text-align: center;
+}
+.siege-vehicle-hud .vh-combat-label {
+   font-size: 0.65rem;
+   text-transform: uppercase;
+   letter-spacing: 0.06em;
+   color: #74a9ff;
+}
+.siege-vehicle-hud .vh-combat-value {
+   font-size: 1.15rem;
+   font-weight: 700;
+   color: #fff;
+}
+.siege-vehicle-hud .vh-combat-max {
+   font-size: 0.8rem;
+   color: #9fc0ff;
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-weapon-mini {
+   background: rgba(0, 0, 0, 0.25);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   padding: 8px;
+}
+.siege-vehicle-hud .vh-mini-title {
+   font-size: 0.7rem;
+   text-transform: uppercase;
+   letter-spacing: 0.06em;
+   color: #74a9ff;
+   margin-bottom: 6px;
+}
+.siege-vehicle-hud .vh-mini-row {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   padding: 3px 0;
+}
+.siege-vehicle-hud .vh-mini-icon {
+   width: 22px;
+   height: 22px;
+   object-fit: contain;
+   border-radius: 3px;
+   background: rgba(0, 0, 0, 0.25);
+}
+.siege-vehicle-hud .vh-mini-name {
+   flex: 1;
+   font-size: 0.82rem;
+}
+.siege-vehicle-hud .vh-mini-count {
+   font-weight: 700;
+   color: #eaf1ff;
+   font-size: 0.85rem;
+}
+
+
+.siege-crew-dossier .scd-rank {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   margin-top: 2px;
+}
+.siege-crew-dossier .scd-rank-icon {
+   width: 22px;
+   height: 22px;
+   object-fit: contain;
+}
+.siege-crew-dossier .scd-rank-name-link {
+   color: #74a9ff;
+   cursor: pointer;
+   text-decoration: underline;
+   font-weight: 600;
+}
+.siege-crew-dossier .scd-rank-name-link:hover {
+   filter: brightness(1.3);
+}
+
+
+.siege-vehicle-hud .vh-details-wrap {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+}
+.siege-vehicle-hud .vh-stats-col {
+   flex: 1 1 auto;
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-combat {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+   margin-top: 10px;
+}
+.siege-vehicle-hud .vh-hp-bar {
+   position: relative;
+   width: 100%;
+   height: 26px;
+   background: rgba(0, 0, 0, 0.45);
+   border: 1px solid #2a4f9e;
+   border-radius: 6px;
+   overflow: hidden;
+}
+.siege-vehicle-hud .vh-hp-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   border-radius: 5px 0 0 5px;
+   transition: width 0.4s ease, background 0.4s ease;
+   
+   box-shadow: 0 0 10px 1px rgba(79, 140, 255, 0.6) inset,
+      0 0 8px rgba(79, 140, 255, 0.45);
+}
+.siege-vehicle-hud .vh-hp-text {
+   position: absolute;
+   inset: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-weight: 700;
+   font-size: 0.85rem;
+   text-shadow: 0 1px 3px #000;
+   color: #fff;
+}
+
+.siege-vehicle-hud .vh-hp-warn {
+   border-color: #f7b801;
+   box-shadow: 0 0 7px #f7b801;
+}
+.siege-vehicle-hud .vh-hp-low {
+   border-color: #f18701;
+   box-shadow: 0 0 9px #f18701;
+   animation: vh-hp-pulse-slow 2.6s ease-in-out infinite;
+}
+.siege-vehicle-hud .vh-hp-crit {
+   border-color: #ff4500;
+   box-shadow: 0 0 11px #ff4500;
+   animation: vh-hp-pulse-fast 0.9s ease-in-out infinite;
+}
+@keyframes vh-hp-pulse-slow {
+   0%, 100% { box-shadow: 0 0 5px #f18701; }
+   50% { box-shadow: 0 0 14px 2px #f18701; }
+}
+@keyframes vh-hp-pulse-fast {
+   0%, 100% { box-shadow: 0 0 6px #ff4500; }
+   50% { box-shadow: 0 0 16px 3px #ff4500; }
+}
+.siege-vehicle-hud .vh-defense {
+   display: flex;
+   gap: 14px;
+   align-items: center;
+}
+.siege-vehicle-hud .vh-def-stat {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   font-weight: 700;
+   font-size: 1rem;
+   color: #eaf1ff;
+   cursor: default;
+}
+.siege-vehicle-hud .vh-def-stat i {
+   color: #74a9ff;
+}
+
+
+.siege-vehicle-hud .vh-weapon-acc {
+   border: 1px solid #2a4f9e;
+   border-radius: 6px;
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   
+   max-height: 170px;
+}
+.siege-vehicle-hud .vh-weapon-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: 100%;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #eaf1ff;
+   border: none;
+   padding: 7px 10px;
+   font-weight: 600;
+   font-size: 0.85rem;
+   cursor: pointer;
+   text-align: left;
+}
+.siege-vehicle-hud .vh-weapon-acc-head:hover {
+   filter: brightness(1.2);
+}
+.siege-vehicle-hud .vh-weapon-acc-body {
+   overflow-y: auto;
+   padding: 8px;
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
+}
+
+
+.siege-vehicle-hud .vh-weapon-list {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+
+
+.siege-vehicle-hud .vh-stash {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+}
+.siege-vehicle-hud .vh-stash-list {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-stash-item {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   padding: 7px 10px;
+}
+.siege-vehicle-hud .vh-stash-icon {
+   width: 30px;
+   height: 30px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.25);
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-stash-name {
+   flex: 1 1 auto;
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-stash-qty {
+   color: #9fc0ff;
+   font-size: 0.85rem;
+}
+.siege-vehicle-hud .vh-stash-take {
+   color: #74a9ff;
+   font-size: 1.15rem;
+   cursor: pointer;
+   text-decoration: none;
+   flex: 0 0 auto;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-take:hover {
+   filter: brightness(1.4);
+}
+.siege-vehicle-hud .vh-stash-add-btn {
+   background: #11337a;
+   border: 1px solid #2255cc;
+   color: #eaf1ff;
+   border-radius: 5px;
+   padding: 6px 10px;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-add-btn:hover {
+   filter: brightness(1.25);
+}
+
+
+.siege-crew-portrait.scp-upload-only .scp-upload-preview {
+   width: 100%;
+   height: 200px;
+   border: 2px solid #4f8cff;
+   border-radius: 8px;
+   background-size: contain;
+   background-position: center;
+   background-repeat: no-repeat;
+   background-color: rgba(0, 0, 0, 0.3);
+   margin: 10px 0;
+}
+
+
+.siege-vehicle-hud .vh-actions-list {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-vehicle-hud .vh-acc {
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   overflow: hidden;
+   transition: filter 0.14s ease, border-color 0.14s ease;
+}
+.siege-vehicle-hud .vh-acc:hover {
+   filter: brightness(1.12);
+   border-color: #2a4f9e;
+}
+.siege-vehicle-hud .vh-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 7px 8px;
+   background: rgba(17, 51, 122, 0.35);
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-acc-head:hover {
+   filter: brightness(1.16);
+}
+.siege-vehicle-hud .vh-acc-icon {
+   width: 30px;
+   height: 30px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.25);
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-acc-titles {
+   flex: 1 1 auto;
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-acc-name {
+   font-weight: 600;
+   min-width: 0;
+   display: inline-flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-acc-name .siege-action-title-text {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-acc-access {
+   font-size: 0.78rem;
+   color: #9fc0ff;
+}
+
+.siege-vehicle-hud .vh-acc-toggle {
+   flex: 0 0 auto;
+   width: 28px;
+   height: 28px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #11337a;
+   border: 1px solid #2255cc;
+   border-radius: 5px;
+   color: #eaf1ff;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-acc-toggle:hover {
+   filter: brightness(1.25);
+}
+.siege-vehicle-hud .vh-acc-body {
+   padding: 8px 10px;
+   border-top: 1px solid #1d3a73;
+}
+
+
+.siege-weaponry-panel .siege-weaponry-list {
+   list-style: none;
+   margin: 0 0 8px 0;
+   padding: 0;
+}
+.siege-weaponry-panel .siege-weapon-row {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 4px 6px;
+}
+.siege-weaponry-panel .siege-weapon-icon {
+   width: 26px;
+   height: 26px;
+   object-fit: contain;
+   flex: 0 0 auto;
+}
+.siege-weaponry-panel .siege-weapon-name {
+   flex: 1 1 auto;
+   font-weight: 600;
+}
+.siege-weaponry-panel .siege-weapon-ammo {
+   opacity: 0.8;
+   font-size: 0.85em;
+}
+.siege-weaponry-panel .siege-weapon-count {
+   font-weight: 700;
+}
+.siege-weaponry-panel .siege-sheet-reload,
+.siege-weaponry-panel .siege-sheet-switch-loaded,
+.siege-weaponry-panel .siege-sheet-unload {
+   cursor: pointer;
+}
+.siege-weaponry-panel .siege-sheet-switch-loaded[disabled] {
+   opacity: 0.45;
+   pointer-events: none;
+}
+
+
+.siege-info-icon {
+   opacity: 0.7;
+   margin-left: 4px;
+   cursor: help;
+}
+.siege-info-icon:hover {
+   opacity: 1;
+}
+
+
+.siege-savedc-add-row {
+   display: flex;
+   gap: 6px;
+   align-items: center;
+}
+.siege-savedc-add-row .siege-savedc-input {
+   flex: 1 1 auto;
+}
+.siege-savedc-badge {
+   font-family: var(--font-mono, monospace);
+   font-size: 0.82em;
+}
+
+.sfx-option-row {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px 12px;
+   margin: 0;
+   font-size: 0.82em;
+   opacity: 0.88;
+}
+.sfx-timing-choice {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   font-weight: normal;
+   white-space: nowrap;
+}
+.tab.sfx {
+   padding: 6px 8px;
+   width: 100%;
+   box-sizing: border-box;
+}
+.tab.sfx > h3 {
+   margin: 0 0 8px;
+}
+.tab.sfx .sfx-acc {
+   margin-bottom: 6px;
+   width: 100%;
+}
+.tab.sfx .sfx-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   width: 100%;
+   min-height: 28px;
+   padding: 4px 8px;
+   text-align: left;
+}
+.tab.sfx .sfx-acc-body {
+   padding: 7px 8px;
+}
+.tab.sfx .sfx-row {
+   display: grid !important;
+   grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) 30px 30px;
+   gap: 4px 6px;
+   align-items: center;
+   margin: 0 0 7px;
+}
+.tab.sfx .sfx-row > label {
+   grid-column: 1;
+   grid-row: 1;
+   line-height: 1.15;
+   margin: 0;
+   overflow-wrap: anywhere;
+   flex: none !important;
+}
+.tab.sfx .sfx-row .sfx-option-row {
+   grid-column: 2 / -1;
+}
+.tab.sfx .sfx-input {
+   grid-column: 2;
+   grid-row: 1;
+   min-width: 0;
+   width: 100%;
+}
+.tab.sfx .sfx-row .play-sfx {
+   grid-column: 3;
+   grid-row: 1;
+}
+.tab.sfx .sfx-row .file-picker {
+   grid-column: 4;
+   grid-row: 1;
+}
+.tab.sfx .play-sfx,
+.tab.sfx .file-picker {
+   width: 30px;
+   min-width: 30px;
+   height: 26px;
+   padding: 0;
+}
+.tab.sfx .sfx-interval-row {
+   display: grid !important;
+   grid-template-columns: minmax(120px, 170px) 90px;
+   gap: 4px 6px;
+   align-items: center;
+   margin: 0 0 7px;
+}
+.tab.sfx .sfx-interval-row > label {
+   margin: 0;
+   line-height: 1.15;
+   flex: none !important;
+}
+.tab.sfx .sfx-interval-row > input {
+   width: 90px;
+}
+@media (max-width: 620px) {
+   .tab.sfx .sfx-row,
+   .tab.sfx .sfx-interval-row {
+      grid-template-columns: 1fr;
+   }
+   .tab.sfx .sfx-row .sfx-option-row {
+      grid-column: 1;
+   }
+   .tab.sfx .sfx-input,
+   .tab.sfx .sfx-row .play-sfx,
+   .tab.sfx .sfx-row .file-picker {
+      grid-column: 1;
+      grid-row: auto;
+   }
+}
+
+
+.siege-vehicle-hud .vh-stash-cat {
+   margin-bottom: 10px;
+}
+.siege-vehicle-hud .vh-stash-cat-head {
+   text-transform: uppercase;
+   font-size: 0.68rem;
+   letter-spacing: 0.07em;
+   color: #74a9ff;
+   font-weight: 700;
+   padding: 4px 2px;
+   border-bottom: 1px solid #1d3f86;
+   margin-bottom: 4px;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-stash-cat-count {
+   background: #11337a;
+   border-radius: 8px;
+   padding: 0 6px;
+   font-size: 0.62rem;
+   color: #cfe0ff;
+}
+.siege-vehicle-hud .vh-stash-cat-items {
+   display: flex;
+   flex-direction: column;
+   gap: 3px;
+}
+
+
+.siege-ammo-types-list {
+   list-style: none;       
+   padding: 0;
+   margin: 0;
+}
+.siege-ammo-types-list .ammo-type-row {
+   list-style: none;
+   padding: 5px;
+   background: rgba(0, 0, 0, 0.05);
+   border-bottom: 1px solid var(--color-border-light-2);
+}
+.siege-ammo-types-list .ammo-type-row::marker {
+   content: "";
+}
+
+.ammo-type-icon {
+   flex: 0 0 28px;
+   width: 28px;
+   height: 28px;
+   border: 1px solid var(--color-border-dark-5, #7a7971);
+   border-radius: 4px;
+   overflow: hidden;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: rgba(0, 0, 0, 0.1);
+}
+.ammo-type-icon img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   border: none;
+}
+.ammo-type-icon:hover {
+   filter: brightness(1.15);
+}
+.ammo-type-row .remove-ammo-type {
+   flex: 0 0 auto;
+   cursor: pointer;
+}
+
+.siege-ammo-droptip {
+   font-size: 0.8em;
+   opacity: 0.75;
+   margin: 0 0 6px 0;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-ammo-types-list.siege-ammo-dragover {
+   outline: 2px dashed var(--color-warm-2, #c9a14a);
+   outline-offset: 2px;
+   background: rgba(201, 161, 74, 0.08);
+}
+
+
+.siege-vehicle-hud .vh-weapon {
+   display: block;
+   padding: 0;
+   overflow: hidden;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   transition: filter 0.14s ease, border-color 0.14s ease;
+}
+.siege-vehicle-hud .vh-weapon:hover {
+   filter: brightness(1.12);
+   border-color: #2a4f9e;
+}
+.siege-vehicle-hud .vh-weapon-head {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 8px 10px;
+   cursor: pointer;
+}
+.siege-vehicle-hud .vh-weapon-body {
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-weapon-name,
+.siege-vehicle-hud .vh-stash-name {
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-weapon-name {
+   min-width: 0;
+   display: inline-flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-weapon-name .siege-action-title-text {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-weapon-detail {
+   padding: 10px 12px;
+   border-top: 1px solid #1d3a73;
+   background: rgba(0, 0, 0, 0.24);
+}
+.siege-vehicle-hud .vh-weapon-detail-large {
+   font-size: 1rem;
+   line-height: 1.4;
+}
+.siege-vehicle-hud .vh-weapon-detail-large p,
+.siege-vehicle-hud .vh-weapon-detail-large .details-desc {
+   font-size: 0.95rem;
+}
+.siege-vehicle-hud .vh-ammo-outer-acc {
+   margin-top: 10px;
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   overflow: hidden;
+}
+.siege-vehicle-hud .vh-ammo-outer-acc > summary {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   padding: 7px 10px;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #eaf1ff;
+   cursor: pointer;
+   list-style: none;
+}
+.siege-vehicle-hud .vh-ammo-outer-acc > summary::-webkit-details-marker {
+   display: none;
+}
+.siege-vehicle-hud .vh-ammo-outer-acc > .details-body {
+   padding: 10px;
+   background: rgba(5, 13, 34, 0.72);
+}
+.siege-ammo-detail {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-ammo-detail-head {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+}
+.siege-ammo-detail-icon {
+   width: 32px;
+   height: 32px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.28);
+}
+.siege-ammo-detail-name {
+   font-weight: 700;
+}
+.siege-ammo-detail-slug {
+   color: #9fc0ff;
+   font-size: 0.78rem;
+}
+.siege-ammo-detail-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+   gap: 6px;
+}
+.siege-ammo-detail-row,
+.vh-stash-meta-row {
+   display: flex;
+   justify-content: space-between;
+   gap: 10px;
+   padding: 4px 6px;
+   border: 1px solid rgba(42, 79, 158, 0.35);
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.18);
+}
+.siege-ammo-detail-row span,
+.vh-stash-meta-row span {
+   text-align: right;
+   color: #cfe0ff;
+}
+.siege-ammo-detail-section {
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+.siege-ammo-types-accordion .action-icon {
+   width: 24px;
+   height: 24px;
+   object-fit: contain;
+   border-radius: 4px;
+}
+.siege-ammo-types-accordion details {
+   background: rgba(5, 13, 34, 0.92);
+   border-color: rgba(79, 140, 255, 0.36);
+}
+.siege-ammo-types-accordion summary {
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #f4f7ff;
+}
+.siege-ammo-types-accordion .details-body {
+   background: rgba(5, 13, 34, 0.94);
+   color: #f4f7ff;
+   border-top-color: rgba(79, 140, 255, 0.32);
+}
+.siege-ammo-detail-icon {
+   border: 1px solid rgba(79, 140, 255, 0.28);
+}
+.siege-ammo-detail-name {
+   color: #f4f7ff;
+}
+.siege-ammo-detail-row,
+.siege-ammo-detail-section {
+   color: #f4f7ff;
+}
+.siege-ammo-detail-row {
+   background: rgba(17, 51, 122, 0.28);
+   border-color: rgba(79, 140, 255, 0.22);
+}
+.siege-ammo-detail-row span {
+   color: #cfe0ff;
+}
+.siege-vehicle-hud .vh-stash-item {
+   display: block;
+   padding: 0;
+   overflow: hidden;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   transition: filter 0.14s ease, border-color 0.14s ease;
+}
+.siege-vehicle-hud .vh-stash-item:hover {
+   filter: brightness(1.12);
+   border-color: #2a4f9e;
+}
+.siege-vehicle-hud .vh-stash-head {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 7px 10px;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-head:hover {
+   filter: brightness(1.16);
+}
+.siege-vehicle-hud .vh-stash-body {
+   flex: 1 1 auto;
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-stash-detail {
+   padding: 10px 12px;
+   border-top: 1px solid #1d3a73;
+   background: rgba(0, 0, 0, 0.24);
+}
+.siege-vehicle-hud .vh-stash-detail-inner {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+}
+.siege-vehicle-hud .vh-stash-description {
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+   line-height: 1.35;
+}
+.siege-vehicle-hud .vh-stash-meta-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-stash-ammo-detail {
+   padding-top: 8px;
+   border-top: 1px solid rgba(42, 79, 158, 0.45);
+}
+.siege-weaponry-panel .siege-sheet-ammo-types {
+   color: #6f4f00;
+   font-weight: 700;
+   text-decoration: underline;
+   cursor: pointer;
+}
+.siege-sheet-ammo-dialog {
+   min-width: 0;
 }
