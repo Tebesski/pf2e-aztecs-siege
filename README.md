@@ -13,6 +13,7 @@ Engines of War automates siege weapons and vehicles on a very high level.
 11.   [Modules](#modules)
 12.   [RIP & TEAR INTEGRATION! TEAR YOUR VEHICLE APART!!](#rip-n-tear-integration)
 13.   [Precautions](#precautions)
+14.   [Screenshots](#screenshots)
 
 ## What It Does
 
@@ -107,3 +108,27 @@ You can also Repair the modules through Repair action!
 ## Precautions
 
 Exit the vehicle before using a crewmember token outside it. A token that remains entered can be hidden, shrunk, moved with the vehicle, or treated as an internal crewmember by targeting and consequence logic.
+
+## Screenshots
+<img width="1087" height="634" alt="portable-mount" src="https://github.com/user-attachments/assets/c9d75f4c-5117-45d6-96bb-7fc37127e202" />
+<img width="601" height="492" alt="portable-lift" src="https://github.com/user-attachments/assets/1bca4a77-02da-4a29-bedd-df2921dbe497" />
+<img width="1061" height="764" alt="haul" src="https://github.com/user-attachments/assets/24a69c37-3da7-4a60-bf17-eeb1aa106cbb" />
+<img width="812" height="852" alt="haul2" src="https://github.com/user-attachments/assets/752349f7-75ea-44f7-b2ba-13035876c789" />
+<img width="884" height="589" alt="module-shield" src="https://github.com/user-attachments/assets/af30c570-f6a3-4d62-911f-ca6b21bd04cd" />
+<img width="1755" height="586" alt="ammunition-types" src="https://github.com/user-attachments/assets/13613d26-4a71-4086-a0e9-85003d385f94" />
+<img width="657" height="504" alt="ammunition-manager" src="https://github.com/user-attachments/assets/46fe8fdf-4f0e-4283-93c2-6a26247cb931" />
+<img width="1632" height="998" alt="strike-setup1" src="https://github.com/user-attachments/assets/834914d8-f7ae-42c3-94be-04fde60e7909" />
+<img width="1436" height="336" alt="strike-setup2" src="https://github.com/user-attachments/assets/647f6de6-55bf-49d5-b343-9dfc3983ecbd" />
+<img width="686" height="395" alt="strike-setup3" src="https://github.com/user-attachments/assets/c649c139-03a8-4dfe-b72f-03381d869372" />
+<img width="849" height="551" alt="action-setup" src="https://github.com/user-attachments/assets/ea589459-f463-4e89-8763-b3cd61bf8e76" />
+<img width="743" height="371" alt="crew-hud" src="https://github.com/user-attachments/assets/34261a55-9d08-4c68-8947-269f7877e5df" />
+<img width="1059" height="615" alt="vehicle-hud" src="https://github.com/user-attachments/assets/6fc0005c-c496-4ba4-b1d7-885d4370634e" />
+<img width="1077" height="698" alt="modules" src="https://github.com/user-attachments/assets/5295a618-ee31-4d20-a725-e936b827b41b" />
+<img width="1085" height="616" alt="ranks" src="https://github.com/user-attachments/assets/3ea5b029-48c1-4457-bdd7-87bbfe84c022" />
+<img width="1103" height="849" alt="vehicle-sheet-weapon" src="https://github.com/user-attachments/assets/13dc93e3-118c-4429-a79d-b95eff5a4266" />
+<img width="1074" height="848" alt="vehicle-sheet-detail" src="https://github.com/user-attachments/assets/30c5ebe7-2e99-4c57-ac3e-8807145deec8" />
+<img width="1069" height="848" alt="vehicle-sheet-crew" src="https://github.com/user-attachments/assets/6e86d789-ee5e-4f8d-b967-85475ce82d20" />
+<img width="1063" height="839" alt="vehicle-sheet-sfx" src="https://github.com/user-attachments/assets/1c4db394-f13e-41f2-b5a4-43449e3421f8" />
+<img width="1074" height="846" alt="rip-n-tear" src="https://github.com/user-attachments/assets/b90d2176-f07f-43e5-84e4-51460e4d4384" />
+<img width="726" height="131" alt="hotkey" src="https://github.com/user-attachments/assets/0421ca25-ecfe-4804-af13-a213c0617a11" />
+<img width="565" height="804" alt="actions" src="https://github.com/user-attachments/assets/0cc9759b-10cb-49f7-934e-398fc7101358" />
