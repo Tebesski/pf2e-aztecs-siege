@@ -1,0 +1,109 @@
+.sfx-option-row {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px 12px;
+   margin: 0;
+   font-size: 0.82em;
+   opacity: 0.88;
+}
+.sfx-timing-choice {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   font-weight: normal;
+   white-space: nowrap;
+}
+.tab.sfx {
+   padding: 6px 8px;
+   width: 100%;
+   box-sizing: border-box;
+}
+.tab.sfx > h3 {
+   margin: 0 0 8px;
+}
+.tab.sfx .sfx-acc {
+   margin-bottom: 6px;
+   width: 100%;
+}
+.tab.sfx .sfx-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   width: 100%;
+   min-height: 28px;
+   padding: 4px 8px;
+   text-align: left;
+}
+.tab.sfx .sfx-acc-body {
+   padding: 7px 8px;
+}
+.tab.sfx .sfx-row {
+   display: grid !important;
+   grid-template-columns: minmax(120px, 170px) minmax(0, 1fr) 30px 30px;
+   gap: 4px 6px;
+   align-items: center;
+   margin: 0 0 7px;
+}
+.tab.sfx .sfx-row > label {
+   grid-column: 1;
+   grid-row: 1;
+   line-height: 1.15;
+   margin: 0;
+   overflow-wrap: anywhere;
+   flex: none !important;
+}
+.tab.sfx .sfx-row .sfx-option-row {
+   grid-column: 2 / -1;
+}
+.tab.sfx .sfx-input {
+   grid-column: 2;
+   grid-row: 1;
+   min-width: 0;
+   width: 100%;
+}
+.tab.sfx .sfx-row .play-sfx {
+   grid-column: 3;
+   grid-row: 1;
+}
+.tab.sfx .sfx-row .file-picker {
+   grid-column: 4;
+   grid-row: 1;
+}
+.tab.sfx .play-sfx,
+.tab.sfx .file-picker {
+   width: 30px;
+   min-width: 30px;
+   height: 26px;
+   padding: 0;
+}
+.tab.sfx .sfx-interval-row {
+   display: grid !important;
+   grid-template-columns: minmax(120px, 170px) 90px;
+   gap: 4px 6px;
+   align-items: center;
+   margin: 0 0 7px;
+}
+.tab.sfx .sfx-interval-row > label {
+   margin: 0;
+   line-height: 1.15;
+   flex: none !important;
+}
+.tab.sfx .sfx-interval-row > input {
+   width: 90px;
+}
+@media (max-width: 620px) {
+   .tab.sfx .sfx-row,
+   .tab.sfx .sfx-interval-row {
+      grid-template-columns: 1fr;
+   }
+   .tab.sfx .sfx-row .sfx-option-row {
+      grid-column: 1;
+   }
+   .tab.sfx .sfx-input,
+   .tab.sfx .sfx-row .play-sfx,
+   .tab.sfx .sfx-row .file-picker {
+      grid-column: 1;
+      grid-row: auto;
+   }
+}
+

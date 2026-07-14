@@ -1,0 +1,26 @@
+<div class="siege-ammo-manage">
+   <div class="siege-ammo-manage-status">{{loadedStatus}}</div>
+   <hr class="siege-sep">
+   <div class="siege-ammo-manage-buttons" aria-label="{{chooseActionLabel}}">
+      <button type="button" class="roll-siege-btn" data-ammo-manage-choice="reload">
+         <i class="fa-solid fa-rotate"></i>
+         <span>{{reloadLabel}}</span>
+      </button>
+      <button type="button" class="roll-siege-btn" data-ammo-manage-choice="switch" {{#unless canSwitch}}disabled{{/unless}}>
+         <i class="fa-solid fa-arrow-right-arrow-left"></i>
+         <span>{{switchLabel}}</span>
+      </button>
+      <button type="button" class="roll-siege-btn" data-ammo-manage-choice="unload" {{#unless canUnload}}disabled{{/unless}}>
+         <i class="fa-solid fa-arrow-down"></i>
+         <span>{{unloadLabel}}</span>
+      </button>
+   </div>
+   <hr class="siege-sep">
+   <div class="siege-section-header siege-ammo-manage-heading">
+      {{availableAmmunitionLabel}}
+   </div>
+   {{{ammoTypesHtml}}}
+   <button type="button" class="siege-ammo-manage-cancel" data-ammo-manage-cancel>
+      {{cancelLabel}}
+   </button>
+</div>

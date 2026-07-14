@@ -1,6 +1,6 @@
 {
    "id": "pf2e-aztecs-siege",
-   "title": "PF2e Aztec's Siege",
+   "title": "PF2e Aztec's Engines of War",
    "version": "#{VERSION}#",
    "compatibility": {
       "minimum": "14",
@@ -8,7 +8,19 @@
    },
    "authors": [{ "name": "Aztec" }],
    "esmodules": ["scripts/main.mjs"],
-   "styles": ["styles/module.css"],
+   "styles": [
+      "styles/core.css",
+      "styles/sheet.css",
+      "styles/action-ammo.css",
+      "styles/crew-hud.css",
+      "styles/crew-dossier.css",
+      "styles/vehicle-hud.css",
+      "styles/vehicle-combat.css",
+      "styles/sfx.css",
+      "styles/vehicle-stash.css",
+      "styles/modules.css",
+      "styles/consequence-cards.css"
+   ],
    "languages": [
       { "lang": "en", "name": "English", "path": "lang/en.json" },
       { "lang": "ru", "name": "Русский", "path": "lang/ru.json" }
@@ -19,5 +31,19 @@
    "socket": true,
    "url": "#{URL}#",
    "manifest": "#{MANIFEST}#",
-   "download": "#{DOWNLOAD}#"
+   "download": "#{DOWNLOAD}#",
+   "packs": [
+      {
+         "name": "engines-of-war",
+         "label": "Engines of War",
+         "path": "packs/engines-of-war",
+         "type": "Macro",
+         "system": "pf2e",
+         "private": false,
+         "ownership": {
+            "PLAYER": "OBSERVER",
+            "ASSISTANT": "OWNER"
+         }
+      }
+   ]
 }

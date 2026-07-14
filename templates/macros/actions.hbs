@@ -1,9 +1,19 @@
 <button class="roll-siege-btn siege-top-btn" data-type="repair">
    <i class="fa-solid fa-hammer"></i> {{i18n.repair}}: {{siegeName}} (DC {{repairDC}})
 </button>
-{{#if isLifting}}
+{{#if showDelegateWeight}}
 <button class="roll-siege-btn siege-top-btn siege-top-btn-extra" data-type="delegate-weight">
    <i class="fa-solid fa-people-arrows"></i> {{i18n.delegateWeight}} ({{myLiftBulk}})
+</button>
+{{/if}}
+{{#if showTakeLeadership}}
+<button class="roll-siege-btn siege-top-btn siege-top-btn-extra" data-type="take-leadership">
+   <i class="fa-solid fa-crown"></i> {{i18n.takeLeadership}}
+</button>
+{{/if}}
+{{#if showDelegateLeadership}}
+<button class="roll-siege-btn siege-top-btn siege-top-btn-extra" data-type="delegate-leadership">
+   <i class="fa-solid fa-crown"></i> {{i18n.delegateLeadership}}
 </button>
 {{/if}}
 <hr class="siege-sep">
@@ -18,9 +28,11 @@
 </div>
 {{/if}}
 
+{{#if hasStrikes}}
+<div class="siege-section-header">{{i18n.strikesSection}}</div>
 <div class="siege-actions-accordion">
-   {{#each actions}}
-   <details>
+   {{#each strikeActions}}
+   <details data-action-id="{{this.id}}" class="{{#if this.ignitionBlocked}}siege-action-ignition-blocked{{/if}} {{#if this.disabled}}siege-action-disabled{{/if}}" {{#if this.open}}open{{/if}}>
       <summary>
          <div class="action-name">
             <img src="{{this.img}}" class="action-icon" />
@@ -36,7 +48,7 @@
          <div class="siege-info-box">
             <p class="siege-no-margin"><strong>{{../i18n.prerequisites}}:</strong>
                {{#each this.prereqData}}
-                  <span class="siege-prereq-item">{{this.name}} {{#if this.showCount}}{{this.current}} / {{this.required}} {{/if}}{{#if this.fulfilled}}<i class="fa-solid fa-check siege-icon-ok"></i>{{else}}<i class="fa-solid fa-times siege-icon-bad"></i>{{/if}}</span>
+                  <span class="siege-prereq-item">{{this.name}} {{#if this.displayCount}}{{this.displayCount}} {{else}}{{#if this.showCount}}{{this.current}} / {{this.required}} {{/if}}{{/if}}{{#if this.fulfilled}}<i class="fa-solid fa-check siege-icon-ok"></i>{{else}}<i class="fa-solid fa-times siege-icon-bad"></i>{{/if}}</span>
                {{/each}}
             </p>
          </div>
@@ -44,31 +56,49 @@
 
          {{#if this.isStrike}}
          <div class="siege-action-details siege-info-box">
-            {{#if this.ammoName}}
-            <p class="siege-detail-line"><strong>{{../i18n.ammunition}}:</strong> {{this.ammoName}} ({{this.spend}})</p>
-            <p class="siege-detail-line"><strong>{{this.ammoLoaded}} / {{this.ammoMax}}</strong></p>
+            {{#if this.usesAmmunition}}
+            <details class="vh-ammo-outer-acc siege-action-ammo-types">
+               <summary>
+                  <span><i class="fa-solid fa-bomb"></i> {{../i18n.ammunitionTypes}}</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+               </summary>
+               <div class="details-body">{{{this.ammoTypesAccordionHtml}}}</div>
+            </details>
+            <p class="siege-detail-line"><strong>{{../i18n.loaded}}:</strong> {{this.loadedDisplay}}</p>
             {{/if}}
-            <p class="siege-detail-line"><strong>{{../i18n.traits}}:</strong> {{this.traitsStr}}</p>
 
             {{#if this.isAbility}}
                <p class="siege-detail-line"><strong>{{../i18n.saveDC}}:</strong> {{this.saveDC}}</p>
-               {{#if this.areaSize}}
+               <p class="siege-detail-line"><strong>{{../i18n.traits}}:</strong> {{this.traitsStr}}</p>
+               {{#if this.showArea}}
                <p class="siege-no-margin"><strong>{{../i18n.area}}:</strong> {{this.areaSize}} ft. {{capitalize this.areaType}}</p>
                {{/if}}
-            {{else if this.isRanged}}
-               <p class="siege-no-margin"><strong>{{../i18n.range}}:</strong> {{this.blindRange}} / {{this.minRange}} / {{this.maxRange}}</p>
+            {{else}}
+               <p class="siege-detail-line"><strong>{{../i18n.traits}}:</strong> {{this.traitsStr}}</p>
+            {{#if this.showRange}}
+               <p class="siege-no-margin"><strong>{{../i18n.range}}:</strong> {{this.rangeText}}</p>
+            {{/if}}
             {{/if}}
          </div>
+         {{/if}}
 
+         {{#if this.showDamage}}
          <div class="siege-damage-tags">
             {{{this.damageHtml}}}
          </div>
          {{/if}}
 
+         {{#if this.ignitionBlocked}}
+         <p class="siege-ignition-required">{{../i18n.ignitionRequired}}</p>
+         {{/if}}
+         {{#if this.disabled}}
+         <p class="siege-action-disabled-reason">{{this.disabledReason}}</p>
+         {{/if}}
+
          <div class="details-buttons">
             {{#each this.buttons}}
-            <button class="roll-siege-btn" data-type="{{this.type}}" data-item="{{../id}}" {{#if this.hasIdx}}data-skillidx="{{this.idx}}"{{/if}} {{#if ../../crewBlocked}}disabled{{/if}}>
-               <img src="{{../img}}" class="action-icon"> {{{this.label}}} {{{../costGlyph}}}
+            <button class="roll-siege-btn {{#if this.fullWidth}}siege-action-btn-wide{{/if}} {{#if this.cobalt}}siege-action-btn-cobalt{{/if}}" data-type="{{this.type}}" data-item="{{#if this.itemId}}{{this.itemId}}{{else}}{{../id}}{{/if}}" {{#if this.hasIdx}}data-skillidx="{{this.idx}}"{{/if}} {{#if this.disabled}}disabled{{/if}} {{#if ../../crewBlocked}}disabled{{/if}} {{#if ../ignitionBlocked}}disabled{{/if}}>
+               <img src="{{#if this.icon}}{{this.icon}}{{else}}{{../img}}{{/if}}" class="action-icon"> {{{this.label}}} {{#unless this.suppressCostGlyph}}{{#if this.costGlyph}}{{{this.costGlyph}}}{{else}}{{{../costGlyph}}}{{/if}}{{/unless}}
             </button>
             {{/each}}
          </div>
@@ -80,13 +110,16 @@
                <input type="checkbox" class="siege-corner-shot-cb" data-item="{{this.id}}"> {{../i18n.cornerShot}} ({{this.cornerShot.newSize}}-ft {{capitalize this.cornerShot.newType}})
             </label>
             {{/if}}
-            <div class="siege-penalty-row">
-               <label class="siege-inline-checkbox-tight">
-                  <input type="checkbox" class="veh-penalty-2" data-item="{{this.id}}"> {{../i18n.penalty2}}
-               </label>
-               <label class="siege-inline-checkbox-tight">
-                  <input type="checkbox" class="veh-penalty-4" data-item="{{this.id}}"> {{../i18n.penalty4}}
-               </label>
+            <div class="siege-penalty-row siege-vehicle-penalty-row">
+               <span class="siege-vehicle-penalty-label">
+                  <label class="siege-inline-label" for="veh-penalty-{{this.id}}">{{../i18n.attackingFromVehiclePenalty}}</label>
+                  <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{../i18n.attackingFromVehiclePenaltyTip}}"></i>
+               </span>
+               <select id="veh-penalty-{{this.id}}" class="veh-penalty-select" data-item="{{this.id}}">
+                  <option value="0">{{../i18n.noVehiclePenalty}}</option>
+                  <option value="-2">{{../i18n.penalty2}}</option>
+                  <option value="-4">{{../i18n.uncontrolledPenalty}}</option>
+               </select>
             </div>
 
             {{#if this.hasNonlethal}}
@@ -125,3 +158,143 @@
    </details>
    {{/each}}
 </div>
+{{/if}}
+
+{{#if hasOtherActions}}
+<div class="siege-section-header">{{i18n.actionsSection}}</div>
+<div class="siege-actions-accordion">
+   {{#each otherActions}}
+   <details data-action-id="{{this.id}}" class="{{#if this.ignitionBlocked}}siege-action-ignition-blocked{{/if}} {{#if this.disabled}}siege-action-disabled{{/if}}" {{#if this.open}}open{{/if}}>
+      <summary>
+         <div class="action-name">
+            <img src="{{this.img}}" class="action-icon" />
+            <span>{{this.name}}</span>
+            {{{this.costGlyph}}}
+         </div>
+         <i class="fa-solid fa-chevron-right chevron"></i>
+      </summary>
+      <div class="details-body">
+         <div class="details-desc">{{{this.description}}}</div>
+
+         {{#if this.prereqData.length}}
+         <div class="siege-info-box">
+            <p class="siege-no-margin"><strong>{{../i18n.prerequisites}}:</strong>
+               {{#each this.prereqData}}
+                  <span class="siege-prereq-item">{{this.name}} {{#if this.displayCount}}{{this.displayCount}} {{else}}{{#if this.showCount}}{{this.current}} / {{this.required}} {{/if}}{{/if}}{{#if this.fulfilled}}<i class="fa-solid fa-check siege-icon-ok"></i>{{else}}<i class="fa-solid fa-times siege-icon-bad"></i>{{/if}}</span>
+               {{/each}}
+            </p>
+         </div>
+         {{/if}}
+
+         {{#if this.isStrike}}
+         <div class="siege-action-details siege-info-box">
+            {{#if this.usesAmmunition}}
+            <details class="vh-ammo-outer-acc siege-action-ammo-types">
+               <summary>
+                  <span><i class="fa-solid fa-bomb"></i> {{../i18n.ammunitionTypes}}</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+               </summary>
+               <div class="details-body">{{{this.ammoTypesAccordionHtml}}}</div>
+            </details>
+            <p class="siege-detail-line"><strong>{{../i18n.loaded}}:</strong> {{this.loadedDisplay}}</p>
+            {{/if}}
+
+            {{#if this.isAbility}}
+               <p class="siege-detail-line"><strong>{{../i18n.saveDC}}:</strong> {{this.saveDC}}</p>
+               <p class="siege-detail-line"><strong>{{../i18n.traits}}:</strong> {{this.traitsStr}}</p>
+               {{#if this.showArea}}
+               <p class="siege-no-margin"><strong>{{../i18n.area}}:</strong> {{this.areaSize}} ft. {{capitalize this.areaType}}</p>
+               {{/if}}
+            {{else}}
+               <p class="siege-detail-line"><strong>{{../i18n.traits}}:</strong> {{this.traitsStr}}</p>
+            {{#if this.showRange}}
+               <p class="siege-no-margin"><strong>{{../i18n.range}}:</strong> {{this.rangeText}}</p>
+            {{/if}}
+            {{/if}}
+         </div>
+         {{/if}}
+
+         {{#if this.showDamage}}
+         <div class="siege-damage-tags">
+            {{{this.damageHtml}}}
+         </div>
+         {{/if}}
+
+         {{#if this.ignitionBlocked}}
+         <p class="siege-ignition-required">{{../i18n.ignitionRequired}}</p>
+         {{/if}}
+         {{#if this.disabled}}
+         <p class="siege-action-disabled-reason">{{this.disabledReason}}</p>
+         {{/if}}
+
+         <div class="details-buttons">
+            {{#each this.buttons}}
+            <button class="roll-siege-btn {{#if this.fullWidth}}siege-action-btn-wide{{/if}} {{#if this.cobalt}}siege-action-btn-cobalt{{/if}}" data-type="{{this.type}}" data-item="{{#if this.itemId}}{{this.itemId}}{{else}}{{../id}}{{/if}}" {{#if this.hasIdx}}data-skillidx="{{this.idx}}"{{/if}} {{#if this.disabled}}disabled{{/if}} {{#if ../../crewBlocked}}disabled{{/if}} {{#if ../ignitionBlocked}}disabled{{/if}}>
+               <img src="{{#if this.icon}}{{this.icon}}{{else}}{{../img}}{{/if}}" class="action-icon"> {{{this.label}}} {{#unless this.suppressCostGlyph}}{{#if this.costGlyph}}{{{this.costGlyph}}}{{else}}{{{../costGlyph}}}{{/if}}{{/unless}}
+            </button>
+            {{/each}}
+         </div>
+
+         {{#if this.isStrike}}
+         <div class="vehicle-penalties">
+            {{#if this.cornerShot}}
+            <label class="siege-inline-checkbox-tight">
+               <input type="checkbox" class="siege-corner-shot-cb" data-item="{{this.id}}"> {{../i18n.cornerShot}} ({{this.cornerShot.newSize}}-ft {{capitalize this.cornerShot.newType}})
+            </label>
+            {{/if}}
+            <div class="siege-penalty-row siege-vehicle-penalty-row">
+               <span class="siege-vehicle-penalty-label">
+                  <label class="siege-inline-label" for="veh-penalty-{{this.id}}">{{../i18n.attackingFromVehiclePenalty}}</label>
+                  <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{../i18n.attackingFromVehiclePenaltyTip}}"></i>
+               </span>
+               <select id="veh-penalty-{{this.id}}" class="veh-penalty-select" data-item="{{this.id}}">
+                  <option value="0">{{../i18n.noVehiclePenalty}}</option>
+                  <option value="-2">{{../i18n.penalty2}}</option>
+                  <option value="-4">{{../i18n.uncontrolledPenalty}}</option>
+               </select>
+            </div>
+
+            {{#if this.hasNonlethal}}
+            <div class="siege-penalty-row">
+               <label class="siege-inline-checkbox-tight">
+                  <input type="checkbox" class="siege-nonlethal-cb" data-item="{{this.id}}" checked> {{../i18n.lethalAttack}}
+               </label>
+            </div>
+            {{/if}}
+
+            {{#if ../isPortable}}
+               {{#if this.isStrike}}
+               <div class="siege-penalty-row">
+                  <label class="siege-inline-checkbox-tight">
+                     <input type="checkbox" class="siege-highest-str-cb" data-item="{{this.id}}" checked> {{../i18n.highestStrInCrew}}
+                  </label>
+               </div>
+               {{/if}}
+            {{/if}}
+
+            {{#if this.versatileOptions.length}}
+            <div class="siege-penalty-row siege-versatile-row">
+               <label class="siege-inline-checkbox-tight">
+                  <input type="radio" name="versatile-{{this.id}}" class="siege-versatile-radio" data-item="{{this.id}}" value="base" checked> {{../i18n.damage}}
+               </label>
+               {{#each this.versatileOptions}}
+               <label class="siege-inline-checkbox-tight">
+                  <input type="radio" name="versatile-{{../id}}" class="siege-versatile-radio" data-item="{{../id}}" data-type="{{this.type}}" value="{{this.trait}}"> {{this.label}}
+               </label>
+               {{/each}}
+            </div>
+            {{/if}}
+         </div>
+         {{/if}}
+      </div>
+   </details>
+   {{/each}}
+</div>
+{{/if}}
+
+{{#if showLeaveVehicle}}
+<hr class="siege-sep">
+<button class="roll-siege-btn siege-exit-vehicle-btn" data-type="{{leaveVehicleType}}">
+   <i class="fa-solid {{leaveVehicleIcon}}"></i> {{leaveVehicleLabel}}
+</button>
+{{/if}}

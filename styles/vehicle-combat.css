@@ -1,0 +1,399 @@
+@keyframes vh-hp-pulse-slow {
+   0%, 100% { box-shadow: 0 0 5px #f18701; }
+   50% { box-shadow: 0 0 14px 2px #f18701; }
+}
+@keyframes vh-hp-pulse-fast {
+   0%, 100% { box-shadow: 0 0 6px #ff4500; }
+   50% { box-shadow: 0 0 16px 3px #ff4500; }
+}
+.siege-vehicle-hud .vh-defense {
+   display: flex;
+   gap: 6px;
+   align-items: center;
+   justify-content: center;
+   flex-wrap: nowrap;
+}
+.siege-vehicle-hud .vh-def-stat {
+   display: flex;
+   align-items: center;
+   gap: 3px;
+   font-weight: 700;
+   font-size: 0.86rem;
+   color: #eaf1ff;
+   cursor: default;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-def-stat i {
+   color: #74a9ff;
+}
+.siege-vehicle-hud .vh-def-separator {
+   color: rgba(234, 241, 255, 0.55);
+   font-weight: 700;
+   margin: 0;
+}
+
+.siege-vehicle-hud .vh-shield-status {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-shield-row {
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-shield-bar {
+   position: relative;
+   width: 100%;
+   height: 24px;
+   background: rgba(0, 0, 0, 0.48);
+   border: 1px solid #c79436;
+   border-radius: 6px;
+   overflow: hidden;
+   box-shadow: 0 0 7px rgba(217, 163, 62, 0.35);
+}
+.siege-vehicle-hud .vh-shield-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   border-radius: 5px 0 0 5px;
+   background: linear-gradient(90deg, #9e6c1d, #f0c15e);
+   box-shadow: 0 0 10px rgba(244, 197, 93, 0.6) inset,
+      0 0 8px rgba(244, 197, 93, 0.42);
+   transition: width 0.35s ease;
+}
+.siege-vehicle-hud .vh-shield-text {
+   position: absolute;
+   inset: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 8px;
+   padding: 0 8px;
+   color: #fff7df;
+   font-weight: 700;
+   font-size: 0.78rem;
+   text-shadow: 0 1px 3px #000;
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-shield-name {
+   display: flex;
+   align-items: center;
+   gap: 5px;
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-shield-name i {
+   flex: 0 0 auto;
+   color: #ffd56a;
+}
+.siege-vehicle-hud .vh-shield-numbers {
+   flex: 0 0 auto;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-shield-broken .vh-shield-bar {
+   border-color: #a95638;
+   box-shadow: 0 0 7px rgba(204, 80, 45, 0.35);
+}
+.siege-vehicle-hud .vh-shield-broken .vh-shield-fill {
+   background: linear-gradient(90deg, #703922, #b96b3b);
+   box-shadow: 0 0 8px rgba(194, 93, 53, 0.45) inset;
+}
+.siege-vehicle-hud .vh-shield-acc {
+   border: 1px solid rgba(199, 148, 54, 0.72);
+   border-radius: 6px;
+   overflow: hidden;
+   background: rgba(8, 15, 31, 0.52);
+}
+.siege-vehicle-hud .vh-shield-acc > summary {
+   display: flex;
+   align-items: center;
+   gap: 7px;
+   padding: 6px 8px;
+   list-style: none;
+   cursor: pointer;
+   color: #fff1c7;
+   font-size: 0.82rem;
+   font-weight: 700;
+   background: linear-gradient(160deg, rgba(107, 76, 22, 0.78), rgba(36, 28, 15, 0.9));
+}
+.siege-vehicle-hud .vh-shield-acc > summary::-webkit-details-marker {
+   display: none;
+}
+.siege-vehicle-hud .vh-shield-acc > summary:hover {
+   filter: brightness(1.16);
+}
+.siege-vehicle-hud .vh-shield-chevron {
+   color: #ffd56a;
+   transition: transform 0.16s ease;
+}
+.siege-vehicle-hud .vh-shield-acc[open] .vh-shield-chevron {
+   transform: rotate(90deg);
+}
+.siege-vehicle-hud .vh-shield-list {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   padding: 7px;
+   max-height: 66px;
+   overflow-y: auto;
+}
+
+.siege-vehicle-hud .vh-weapon-acc {
+   border: 1px solid #2a4f9e;
+   border-radius: 6px;
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   
+   max-height: 170px;
+}
+.siege-vehicle-hud .vh-weapon-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   width: 100%;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #eaf1ff;
+   border: none;
+   padding: 7px 10px;
+   font-weight: 600;
+   font-size: 0.85rem;
+   cursor: pointer;
+   text-align: left;
+}
+.siege-vehicle-hud .vh-weapon-acc-head:hover {
+   filter: brightness(1.2);
+}
+.siege-vehicle-hud .vh-weapon-acc-body {
+   overflow-y: auto;
+   padding: 8px;
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
+}
+
+.siege-vehicle-hud .vh-weapon-list {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+
+.siege-vehicle-hud .vh-stash {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+}
+.siege-vehicle-hud .vh-stash-list {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-stash-item {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   background: rgba(17, 51, 122, 0.35);
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   padding: 7px 10px;
+}
+.siege-vehicle-hud .vh-stash-icon {
+   width: 30px;
+   height: 30px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.25);
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-stash-name {
+   flex: 1 1 auto;
+   font-weight: 600;
+}
+.siege-vehicle-hud .vh-stash-qty {
+   color: #9fc0ff;
+   font-size: 0.85rem;
+}
+.siege-vehicle-hud .vh-stash-take {
+   width: 28px;
+   height: 28px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #11337a;
+   border: 1px solid #2255cc;
+   border-radius: 5px;
+   color: #74a9ff;
+   font-size: 0.9rem;
+   cursor: pointer;
+   text-decoration: none;
+   flex: 0 0 auto;
+   transition: filter 0.12s ease;
+   padding: 0;
+}
+.siege-vehicle-hud .vh-stash-take:hover {
+   filter: brightness(1.4);
+}
+.siege-vehicle-hud .vh-stash-add-btn {
+   background: #11337a;
+   border: 1px solid #2255cc;
+   color: #eaf1ff;
+   border-radius: 5px;
+   padding: 6px 10px;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-stash-add-btn:hover {
+   filter: brightness(1.25);
+}
+
+.siege-crew-portrait.scp-upload-only .scp-upload-preview {
+   width: 100%;
+   height: 200px;
+   border: 2px solid #4f8cff;
+   border-radius: 8px;
+   background-size: contain;
+   background-position: center;
+   background-repeat: no-repeat;
+   background-color: rgba(0, 0, 0, 0.3);
+   margin: 10px 0;
+}
+
+.siege-vehicle-hud .vh-actions-list {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-vehicle-hud .vh-acc {
+   border: 1px solid #1d3a73;
+   border-radius: 6px;
+   overflow: hidden;
+   transition: filter 0.14s ease, border-color 0.14s ease;
+}
+.siege-vehicle-hud .vh-acc:hover {
+   filter: brightness(1.12);
+   border-color: #2a4f9e;
+}
+.siege-vehicle-hud .vh-acc-head {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 7px 8px;
+   background: rgba(17, 51, 122, 0.35);
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-acc-head:hover {
+   filter: brightness(1.16);
+}
+.siege-vehicle-hud .vh-acc-icon {
+   width: 30px;
+   height: 30px;
+   object-fit: contain;
+   border-radius: 4px;
+   background: rgba(0, 0, 0, 0.25);
+   flex: 0 0 auto;
+}
+.siege-vehicle-hud .vh-acc-titles {
+   flex: 1 1 auto;
+   min-width: 0;
+}
+.siege-vehicle-hud .vh-acc-name {
+   font-weight: 600;
+   min-width: 0;
+   display: inline-flex;
+   align-items: center;
+   gap: 6px;
+}
+.siege-vehicle-hud .vh-acc-name .siege-action-title-text {
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-vehicle-hud .vh-acc-access {
+   font-size: 0.78rem;
+   color: #9fc0ff;
+}
+
+.siege-vehicle-hud .vh-acc-toggle {
+   flex: 0 0 auto;
+   width: 28px;
+   height: 28px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #11337a;
+   border: 1px solid #2255cc;
+   border-radius: 5px;
+   color: #eaf1ff;
+   cursor: pointer;
+   transition: filter 0.12s ease;
+}
+.siege-vehicle-hud .vh-acc-toggle:hover {
+   filter: brightness(1.25);
+}
+.siege-vehicle-hud .vh-acc-body {
+   padding: 8px 10px;
+   border-top: 1px solid #1d3a73;
+}
+
+.siege-weaponry-panel .siege-weaponry-list {
+   list-style: none;
+   margin: 0 0 8px 0;
+   padding: 0;
+}
+.siege-weaponry-panel .siege-weapon-row {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 4px 6px;
+}
+.siege-weaponry-panel .siege-weapon-icon {
+   width: 26px;
+   height: 26px;
+   object-fit: contain;
+   flex: 0 0 auto;
+}
+.siege-weaponry-panel .siege-weapon-name {
+   flex: 1 1 auto;
+   font-weight: 600;
+}
+.siege-weaponry-panel .siege-weapon-ammo {
+   opacity: 0.8;
+   font-size: 0.85em;
+}
+.siege-weaponry-panel .siege-weapon-count {
+   font-weight: 700;
+}
+.siege-weaponry-panel .siege-sheet-reload,
+.siege-weaponry-panel .siege-sheet-switch-loaded,
+.siege-weaponry-panel .siege-sheet-unload {
+   cursor: pointer;
+}
+.siege-weaponry-panel .siege-sheet-switch-loaded[disabled] {
+   opacity: 0.45;
+   pointer-events: none;
+}
+
+.siege-info-icon {
+   opacity: 0.7;
+   margin-left: 4px;
+   cursor: help;
+}
+.siege-info-icon:hover {
+   opacity: 1;
+}
+
+.siege-savedc-add-row {
+   display: flex;
+   gap: 6px;
+   align-items: center;
+}
+.siege-savedc-add-row .siege-savedc-input {
+   flex: 1 1 auto;
+}
+.siege-savedc-badge {
+   font-family: var(--font-mono, monospace);
+   font-size: 0.82em;
+}
+

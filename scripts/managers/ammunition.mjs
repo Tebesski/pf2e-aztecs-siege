@@ -1,10 +1,13 @@
 import {
    MODULE_ID,
    DEFAULT_AMMO_IMG,
-   PHYSICAL_ITEM_TYPES,
 } from "../constants.mjs"
 import { slugify, isSiege, tKey } from "../utils.mjs"
 import { SiegeCrewManager } from "./crew.mjs"
+import { ammunitionInventoryMethods } from "./ammunition/inventory.mjs"
+import { ammunitionLoadedStateMethods } from "./ammunition/loaded-state.mjs"
+import { ammunitionReloadFlowMethods } from "./ammunition/reload-flow.mjs"
+import { ammunitionStockMutationMethods } from "./ammunition/stock-mutations.mjs"
 
 export class AmmunitionManager {
    static initHooks() {
@@ -13,6 +16,9 @@ export class AmmunitionManager {
       )
       Hooks.on("preUpdateItem", (item, changes, options, userId) =>
          this.onPreUpdateItem(item, changes, options, userId),
+      )
+      Hooks.on("preDeleteItem", (item, options, userId) =>
+         this.onPreDeleteItem(item, options, userId),
       )
       Hooks.on("createItem", (item, options, userId) =>
          this.onItemChange(item, userId),
@@ -29,50 +35,54 @@ export class AmmunitionManager {
       return slugify(text)
    }
 
+   static loadProgressEffectsForAction(vehicle, action) {
+      if (!vehicle || !action) return []
+      const fallbackName = tKey("Markers.LoadPerformed", { name: action.name })
+      return vehicle.itemTypes.effect.filter(
+         (effect) =>
+            (effect.getFlag(MODULE_ID, "isLoadPerformed") &&
+               effect.getFlag(MODULE_ID, "actionId") === action.id) ||
+            effect.name === fallbackName,
+      )
+   }
+
+   static async clearLoadProgressForAction(vehicle, action) {
+      const effects = this.loadProgressEffectsForAction(vehicle, action)
+      if (effects.length === 0) return
+      await vehicle.deleteEmbeddedDocuments(
+         "Item",
+         effects.map((effect) => effect.id),
+         { siegeLoadProgressSync: true },
+      )
+   }
+
    static onItemChange(item, userId) {
       if (game.user.id !== userId) return
       if (!item.parent || !isSiege(item.parent)) return
 
-      if (this.isAmmoItem(item)) {
-         this.syncLoadedEffects(item.parent)
-      } else if (
-         item.type === "effect" &&
-         item.getFlag(MODULE_ID, "isLoadedMarker")
-      ) {
-         this.syncAmmoFromEffect(item)
-      } else if (item.type === "action") {
+if (item.type === "action") {
          SiegeCrewManager.syncCrewEffects(item.parent)
       }
    }
 
    static async onItemDelete(item, userId) {
-      if (game.user.id !== userId) return
       const actor = item.parent
       if (!actor || !isSiege(actor)) return
-
-      if (this.isAmmoItem(item)) {
-         this.syncLoadedEffects(actor)
+      if (
+         item.type === "effect" &&
+         (item.getFlag(MODULE_ID, "isStrikeLoadedMarker") ||
+            item.getFlag(MODULE_ID, "isLoadedMarker"))
+      ) {
+         await this.syncStrikeLoadedEffects(actor)
          return
       }
-      if (
-         item.type !== "effect" ||
-         !item.getFlag(MODULE_ID, "isLoadedMarker")
-      )
-         return
-
-      const ammoName = item.name.replace(/^Loaded: /, "")
-      const slug = slugify(ammoName)
-      const ammoItems = actor.items.filter(
-         (i) =>
-            this.isAmmoItem(i) &&
-            (i.system?.slug || slugify(i.name)) === slug,
-      )
-
-      if (ammoItems.length > 0) {
-         await actor.deleteEmbeddedDocuments(
-            "Item",
-            ammoItems.map((i) => i.id),
-         )
+      if (game.user.id !== userId) return
+      
+      if (item.type === "action") {
+         const map = actor.getFlag(MODULE_ID, "loadedByStrike") || {}
+         if (map[item.id] !== undefined) {
+            await this.setStrikeLoaded(actor, item.id, 0)
+         }
       }
    }
 
@@ -80,71 +90,35 @@ export class AmmunitionManager {
       const actor = item.parent
       if (!actor || !isSiege(actor)) return
 
-      const isPhysicalItem =
-         (item.isOfType && item.isOfType("physical")) ||
-         PHYSICAL_ITEM_TYPES.includes(item.type)
-      if (!isPhysicalItem) return
+}
 
-      if (!this.isAmmoItem(item)) {
-         ui.notifications.warn(tKey("Notifications.AmmunitionOnlyStorage"))
+   static onPreUpdateItem(item, changes, options = {}) {
+      const actor = item?.parent
+      if (
+         actor &&
+         isSiege(actor) &&
+         item.type === "effect" &&
+         (item.getFlag(MODULE_ID, "isStrikeLoadedMarker") ||
+            item.getFlag(MODULE_ID, "isLoadedMarker")) &&
+         foundry.utils.getProperty(changes, "system.badge.value") !== undefined &&
+         !options.siegeAmmoSync
+      ) {
+         ui.notifications.warn(tKey("Notifications.LoadedEffectManaged"))
          return false
       }
 
-      if (!this.validateItem(item, actor)) {
-         ui.notifications.warn(
-            tKey("Notifications.InvalidAmmo", { name: item.name }),
-         )
-         return false
-      }
+}
 
-      const itemSlug = item.system?.slug || slugify(item.name)
-      const ammoTypes = actor.getFlag(MODULE_ID, "ammunitionTypes") || []
-      const allowedType = ammoTypes.find(
-         (t) => slugify(t.slug || t.name) === itemSlug,
-      )
-      if (!allowedType || allowedType.max === "") return
-
-      const maxCap = parseInt(allowedType.max)
-      const currentQty = this.getCurrentAmmoCount(actor, itemSlug)
-      const incomingQty = item.system?.quantity || 1
-
-      if (currentQty + incomingQty <= maxCap) return
-
-      const allowedIncoming = Math.max(0, maxCap - currentQty)
-      if (allowedIncoming <= 0) {
-         ui.notifications.warn(
-            tKey("Notifications.MaxCapacityReached", { name: item.name }),
-         )
-         return false
-      }
-
-      ui.notifications.warn(
-         tKey("Notifications.CapacityAdjusted", {
-            qty: allowedIncoming,
-            name: item.name,
-         }),
-      )
-      item.updateSource({ "system.quantity": allowedIncoming })
-   }
-
-   static onPreUpdateItem(item, changes) {
+   static onPreDeleteItem(item, options = {}) {
       const actor = item.parent
-      if (!actor || !isSiege(actor) || !this.isAmmoItem(item)) return
-      if (changes.system?.quantity === undefined) return
-
-      const slug = item.system?.slug || slugify(item.name)
-      const ammoTypes = actor.getFlag(MODULE_ID, "ammunitionTypes") || []
-      const allowedType = ammoTypes.find(
-         (t) => slugify(t.slug || t.name) === slug,
-      )
-      if (!allowedType || allowedType.max === "") return
-
-      const maxCap = parseInt(allowedType.max)
-      const otherQty = this.getCurrentAmmoCount(actor, slug) - item.system.quantity
-      if (otherQty + changes.system.quantity > maxCap) {
-         ui.notifications.warn(tKey("Notifications.MaxCapacityReachedGeneric"))
-         changes.system.quantity = Math.max(0, maxCap - otherQty)
-      }
+      if (!actor || !isSiege(actor) || item.type !== "effect") return
+      const isLoadedMarker =
+         item.getFlag(MODULE_ID, "isStrikeLoadedMarker") ||
+         item.getFlag(MODULE_ID, "isLoadedMarker")
+      if (!isLoadedMarker) return
+      if (options.siegeAmmoSync || options.systemDeletion) return
+      ui.notifications.warn(tKey("Notifications.LoadedEffectManaged"))
+      return false
    }
 
    static async syncLoadedEffects(actor) {
@@ -174,11 +148,14 @@ export class AmmunitionManager {
          if (qty > 0) {
             if (existing) {
                if (
-                  existing.system.badge?.value !== qty ||
-                  existing.img !== img
-               ) {
-                  await existing.update({ "system.badge.value": qty, img })
-               }
+               existing.system.badge?.value !== qty ||
+               existing.img !== img
+            ) {
+                  await existing.update(
+                     { "system.badge.value": qty, img },
+                     { siegeAmmoSync: true },
+                  )
+            }
             } else {
                await actor.createEmbeddedDocuments("Item", [
                   {
@@ -201,113 +178,103 @@ export class AmmunitionManager {
                ])
             }
          } else if (existing) {
-            await existing.delete()
+            await existing.delete({ siegeAmmoSync: true })
          }
       }
    }
 
-   static isAmmoItem(item) {
-      if (item.isAmmo) return true
-      if (item.type === "ammunition" || item.type === "ammo") return true
-      if (
-         item.type === "consumable" ||
-         (item.isOfType && item.isOfType("consumable"))
-      ) {
-         const cat = item.system?.category?.value || item.system?.category
-         return cat === "ammo" || cat === "munition"
+   static _loadedAmmoTypeSlugs(vehicle, action, pieces = null) {
+      const loadedPieces = pieces || this.getLoadedAmmoPieces(vehicle, action)
+      const slugs = new Set(
+         loadedPieces
+            .map((piece) => slugify(piece.slug || piece.name))
+            .filter(Boolean),
+      )
+      if (slugs.size === 0 && this.getStrikeLoaded(vehicle, action) > 0) {
+         const activeSlug = this.activeAmmoSlug(vehicle, action)
+         if (activeSlug) slugs.add(slugify(activeSlug))
       }
-      return false
+      return slugs
    }
 
-   static validateItem(item, actor) {
-      if (!this.isAmmoItem(item)) return false
-      const ammoTypes = actor.getFlag(MODULE_ID, "ammunitionTypes") || []
-      const itemSlug = item.system?.slug || slugify(item.name)
-      return ammoTypes.some((t) => slugify(t.slug || t.name) === itemSlug)
+   static async _confirmReplaceLoadedAmmoType(vehicle, action, targetSlug) {
+      const loadedLabel = this.activeAmmoLabel(vehicle, action)
+      const targetLabel = this.ammoTypeLabel(vehicle, targetSlug)
+      return foundry.applications.api.DialogV2.wait({
+         classes: ["siege-v2-dialog"],
+         window: { title: tKey("Weaponry.ReplaceTitle") },
+         content: `<p>${tKey("Weaponry.ReplaceLoadedAmmoTypePrompt", {
+            current: loadedLabel,
+            next: targetLabel,
+            name: action.name,
+         })}</p>`,
+         buttons: [
+            {
+               action: "replace",
+               label: tKey("Weaponry.Replace"),
+               icon: "fa-solid fa-rotate",
+               default: true,
+               callback: () => true,
+            },
+            {
+               action: "cancel",
+               label: tKey("CrewHUD.Cancel"),
+               callback: () => false,
+            },
+         ],
+      }).catch(() => false)
    }
 
-   static getCurrentAmmoCount(actor, slug) {
-      return actor.items
-         .filter(
-            (i) =>
-               this.isAmmoItem(i) &&
-               (i.system?.slug || slugify(i.name)) === slug,
-         )
-         .reduce((sum, i) => sum + (i.system?.quantity || 1), 0)
-   }
-
-   static async reduceAmmoToMax(actor, slug, maxCap) {
-      const items = actor.items.filter(
-         (i) =>
-            this.isAmmoItem(i) &&
-            (i.system?.slug || slugify(i.name)) === slug,
-      )
-      const currentCount = items.reduce(
-         (sum, i) => sum + (i.system?.quantity || 1),
-         0,
-      )
-      let excess = currentCount - maxCap
-
-      for (const item of items) {
-         if (excess <= 0) break
-         const qty = item.system?.quantity || 1
-         if (qty <= excess) {
-            excess -= qty
-            await item.delete()
-         } else {
-            await item.update({ "system.quantity": qty - excess })
-            excess = 0
+   static async _returnLoadedAmmoToStash(vehicle, action, pieces = null) {
+      const loadedPieces = pieces || this.getLoadedAmmoPieces(vehicle, action)
+      const fallbackSlug = this.activeAmmoSlug(vehicle, action)
+      if (loadedPieces.length > 0) {
+         for (const piece of loadedPieces) {
+            const slug = piece.slug || fallbackSlug
+            if (piece.usesCharges)
+               await this._addChargedPieces(vehicle, slug, [piece])
+            else await this._addUnits(vehicle, slug, 1, piece.template)
          }
+      } else {
+         const loaded = this.getStrikeLoaded(vehicle, action)
+         const template = this.getLoadedAmmoTemplate(vehicle, action)
+         if (loaded > 0 && fallbackSlug)
+            await this._addUnits(vehicle, fallbackSlug, loaded, template)
       }
+      await this.setLoadedAmmoPieces(vehicle, action.id, [], null)
+      await this.setStrikeLoadedCharges(vehicle, action.id, [])
+      await this.setStrikeLoaded(vehicle, action.id, 0)
    }
 
-   static async syncAmmoFromEffect(effect) {
-      const actor = effect.parent
-      if (!actor) return
-
-      const badgeValue = effect.system.badge?.value
-      if (badgeValue === undefined) return
-
-      const ammoName = effect.name.replace(/^Loaded: /, "")
-      const slug = slugify(ammoName)
-
-      const ammoItems = actor.items.filter(
-         (i) =>
-            this.isAmmoItem(i) &&
-            (i.system?.slug || slugify(i.name)) === slug,
-      )
-      const currentQty = ammoItems.reduce(
-         (sum, i) => sum + (i.system?.quantity || 1),
-         0,
-      )
-
-      if (currentQty === badgeValue) return
-
-      if (badgeValue < currentQty) {
-         await this.reduceAmmoToMax(actor, slug, badgeValue)
-         return
-      }
-
-      const diff = badgeValue - currentQty
-      if (ammoItems.length > 0) {
-         const primary = ammoItems[0]
-         await primary.update({
-            "system.quantity": (primary.system.quantity || 1) + diff,
-         })
-         return
-      }
-
-      const ammoTypes = actor.getFlag(MODULE_ID, "ammunitionTypes") || []
-      const tInfo = ammoTypes.find((t) => slugify(t.slug || t.name) === slug)
-      if (!tInfo) return
-
-      await actor.createEmbeddedDocuments("Item", [
-         {
-            name: tInfo.name,
-            type: "consumable",
-            img: effect.img || DEFAULT_AMMO_IMG,
-            system: { category: "ammo", slug, quantity: diff },
-         },
-      ])
+   static async _ensureSingleLoadedAmmoType(
+      vehicle,
+      action,
+      targetSlug,
+      pieces = null,
+      options = {},
+   ) {
+      const target = slugify(targetSlug)
+      if (!target) return true
+      const loadedSlugs = this._loadedAmmoTypeSlugs(vehicle, action, pieces)
+      if (loadedSlugs.size === 0) return true
+      const targetCandidates = this._candidateSlugs(vehicle, target)
+      if ([...loadedSlugs].every((slug) => targetCandidates.has(slug)))
+         return true
+      const confirmed =
+         options.confirmedReplace === true ||
+         (await this._confirmReplaceLoadedAmmoType(vehicle, action, target))
+      if (!confirmed) return false
+      await this._returnLoadedAmmoToStash(vehicle, action, pieces)
+      return true
    }
+
+
 }
+
+Object.assign(
+   AmmunitionManager,
+   ammunitionInventoryMethods,
+   ammunitionLoadedStateMethods,
+   ammunitionReloadFlowMethods,
+   ammunitionStockMutationMethods,
+)

@@ -1,13 +1,62 @@
-import { MODULE_ID, DEFAULT_LIFTED_IMG } from "../constants.mjs"
-import { tKey, validImg } from "../utils.mjs"
+import { MODULE_ID } from "../constants.mjs"
+import { tKey, isSiege, getAllActors, buildCrewLeaderEffect } from "../utils.mjs"
+import { SiegeSocketManager } from "./sockets.mjs"
+import {
+   getLifterCapacity,
+   collectLifters,
+   siegeIdsFor,
+   itemMatchesSiege,
+   relatedSiegeActors,
+   portableBulk,
+} from "./portable-helpers.mjs"
 
 export class SiegePortableManager {
-   static initHooks() {
-      Hooks.on("preDeleteItem", (item, options) =>
-         this.onPreDeleteItem(item, options),
+   static _shiftIsPressed = false
+   static _operationQueue = new Map()
+
+   static _portableMarkerBulk(siege, markerName) {
+      for (const { item } of this._relatedPortableMarkers(siege, markerName)) {
+         const value = Number(item.system?.badge?.value)
+         if (Number.isFinite(value)) return value
+      }
+      return 0
+   }
+
+   static _relatedPortableMarkers(siege, markerName = null) {
+      const markers = []
+      for (const actor of relatedSiegeActors(siege)) {
+         for (const item of actor.itemTypes.effect) {
+            if (!item.getFlag(MODULE_ID, "isPortableMarker")) continue
+            if (markerName && item.name !== markerName) continue
+            markers.push({ actor, item })
+         }
+      }
+      return markers
+   }
+
+   static async _deleteMarker(marker) {
+      await SiegeSocketManager.modifySiegeItem(
+         marker.actor.uuid,
+         "delete",
+         [marker.item.id],
+         { systemDeletion: true },
       )
-      Hooks.on("preUpdateItem", (item, changes, options) =>
-         this.onPreUpdateItem(item, changes, options),
+   }
+
+   static async enqueue(siegeId, func) {
+      if (!siegeId) return
+      const current = this._operationQueue.get(siegeId) || Promise.resolve()
+      const next = current.then(() => func()).catch(() => {})
+      this._operationQueue.set(siegeId, next)
+      return next
+   }
+
+   static initHooks() {
+      Hooks.on("preDeleteItem", (item, options, userId) =>
+         this.onPreDeleteItem(item, options, userId),
+      )
+      Hooks.on("preUpdateItem", (item, changes, options, userId) =>
+         this.onPreUpdateItem(item, changes, options, userId),
       )
       Hooks.on("updateItem", (item, changes, options, userId) =>
          this.onUpdateItem(item, changes, options, userId),
@@ -15,22 +64,51 @@ export class SiegePortableManager {
       Hooks.on("deleteItem", (item, options, userId) =>
          this.onDeleteItem(item, options, userId),
       )
+
+      const track = (e) => (this._shiftIsPressed = e.shiftKey)
+      window.addEventListener("mousedown", track, { capture: true })
+      window.addEventListener(
+         "keydown",
+         (e) => {
+            if (e.key === "Shift") this._shiftIsPressed = true
+         },
+         { capture: true },
+      )
+      window.addEventListener(
+         "keyup",
+         (e) => {
+            if (e.key === "Shift") this._shiftIsPressed = false
+         },
+         { capture: true },
+      )
    }
 
-   static onPreDeleteItem(item, options) {
+   static _getSiegeActor(siegeId) {
+      if (!siegeId) return null
+      const tokenActor = canvas?.tokens?.placeables?.find(
+         (t) =>
+            t.actor?.id === siegeId ||
+            t.document?.actorId === siegeId ||
+            t.actor?.token?.baseActor?.id === siegeId,
+      )?.actor
+      return tokenActor || game.actors.get(siegeId)
+   }
+
+   static onPreDeleteItem(item, options, userId) {
+      if (game.user.id !== userId) return
       if (options.systemDeletion || options.siegeDropCascade) return
       if (
-         item.name === tKey("Markers.Dropped") &&
-         item.getFlag(MODULE_ID, "isPortableMarker")
+         item.name === tKey("ActionTemplates.CarryInConcert.Name") &&
+         item.parent &&
+         isSiege(item.parent)
       ) {
-         ui.notifications.warn(tKey("Notifications.DroppedCannotRemove"))
+         ui.notifications.warn(tKey("Notifications.CannotRemoveCarryInConcert"))
          return false
       }
    }
 
    static onPreUpdateItem(item, changes, options) {
       if (options.siegeDropCascade) return
-
       const isLiftingEffect =
          item.type === "effect" && item.getFlag(MODULE_ID, "isLiftingEffect")
       const isLiftedItem = item.getFlag(MODULE_ID, "isLiftedItem")
@@ -44,344 +122,350 @@ export class SiegePortableManager {
       const oldBulk = isLiftingEffect
          ? item.system.badge?.value || 0
          : item.system.bulk?.value || 0
-      const newBulk = Number(newBulkRaw) || 0
-
-      // Always assign the old value so onUpdateItem can read it
       if (isLiftingEffect) options.siegeOldBadge = oldBulk
       else options.siegeOldBulk = oldBulk
-
-      // Stop here if we are reducing bulk (no capacity checks needed)
-      if (newBulk <= oldBulk) return
-
-      const actor = item.parent
-      const siegeId = item.getFlag(MODULE_ID, "siegeId")
-      if (!actor || !siegeId) return
-      const siege = game.actors.get(siegeId)
-      if (!siege) return
-
-      const capData = this._getLifterCapacity(actor, oldBulk)
-      let cap = capData.capacity
-
-      const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
-      const others = this._collectLifters(siege, { excludeActorId: actor.id })
-      const otherSum = others.reduce((s, o) => s + o.currentBulk, 0)
-      const siegeRoom = Math.max(0, totalBulk - otherSum)
-      cap = Math.min(cap, siegeRoom)
-
-      if (newBulk > cap) {
-         const clamped = Math.max(oldBulk, cap)
-         if (isLiftingEffect)
-            foundry.utils.setProperty(changes, "system.badge.value", clamped)
-         else foundry.utils.setProperty(changes, "system.bulk.value", clamped)
-         ui.notifications.warn(
-            tKey("Notifications.LiftCappedByCapacity", { max: cap }),
-         )
-      }
    }
 
-   static async onUpdateItem(item, changes, options, userId) {
-      if (game.user.id !== userId || options.siegeDropCascade) return
+   static async onUpdateItem(item, changes, options) {
+      if (!game.user.isGM || options.siegeDropCascade) return
+      const isLiftingEffect =
+         item.type === "effect" && item.getFlag(MODULE_ID, "isLiftingEffect")
+      if (!isLiftingEffect) return
 
       const siegeId = item.getFlag(MODULE_ID, "siegeId")
       if (!siegeId) return
-      const siege = game.actors.get(siegeId)
-      if (!siege) return
-      const actor = item.parent
-      if (!actor) return
 
-      const isLiftingEffect =
-         item.type === "effect" && item.getFlag(MODULE_ID, "isLiftingEffect")
-      const isLiftedItem = item.getFlag(MODULE_ID, "isLiftedItem")
-      if (!isLiftingEffect && !isLiftedItem) return
+      await this.enqueue(siegeId, async () => {
+         const actor = item.parent
+         const siege = this._getSiegeActor(siegeId)
+         if (!actor || !siege) return
 
-      const newBulk = isLiftingEffect
-         ? item.system.badge?.value || 0
-         : item.system.bulk?.value || 0
-      const oldBulk = isLiftingEffect
-         ? (options.siegeOldBadge ?? newBulk)
-         : (options.siegeOldBulk ?? newBulk)
-      if (newBulk === oldBulk) return
+         const newBulk = item.system.badge?.value || 0
+         const oldBulk = options.siegeOldBadge ?? newBulk
+         if (newBulk === oldBulk) return
 
-      await this._syncPair(
-         actor,
-         siege,
-         isLiftingEffect ? "effect" : "item",
-         newBulk,
-      )
-      await this.syncPortableState(siege)
+         await this._syncPair(actor, siege, newBulk)
+
+         if (newBulk < oldBulk) {
+            const success = await this._redistributeFreed(
+               siege,
+               oldBulk - newBulk,
+               actor.id,
+            )
+            if (!success) {
+               await this._clearPortableMarkers(siege)
+               await this._doSyncPortableState(siege, null, true)
+            } else {
+               await this._doSyncPortableState(siege)
+            }
+         } else {
+            await this._doSyncPortableState(siege)
+         }
+      })
    }
 
-   static async onDeleteItem(item, options, userId) {
-      if (game.user.id !== userId || options.siegeDropCascade) return
+   static async onDeleteItem(item, options) {
+      if (!game.user.isGM || options.siegeDropCascade || options.systemDeletion)
+         return
 
-      const isDroppedMarker =
-         item.name === tKey("Markers.Dropped") &&
-         item.getFlag(MODULE_ID, "isPortableMarker")
-      const isLiftedMarker =
-         item.name === tKey("Markers.Lifted") &&
-         item.getFlag(MODULE_ID, "isPortableMarker")
-      if (isDroppedMarker || isLiftedMarker) {
-         if (options.systemDeletion) return
-         const siege = item.parent
-         if (siege) await this.syncPortableState(siege)
+      const siegeId = item.getFlag(MODULE_ID, "siegeId")
+      if (!siegeId) {
+         const isMarker =
+            (item.name === tKey("Markers.Dropped") ||
+               item.name === tKey("Markers.Lifted")) &&
+            item.getFlag(MODULE_ID, "isPortableMarker")
+         if (isMarker && item.parent) {
+            await this.enqueue(item.parent.id, () =>
+               this._doSyncPortableState(item.parent),
+            )
+         }
          return
       }
 
-      const siegeId = item.getFlag(MODULE_ID, "siegeId")
-      if (!siegeId) return
-      const actor = item.parent
-      const siege = game.actors.get(siegeId)
-      if (!actor || !siege) return
-
-      const isPositionEffect =
-         item.type === "effect" && item.getFlag(MODULE_ID, "position")
-      const isLiftingEffect =
-         item.type === "effect" && item.getFlag(MODULE_ID, "isLiftingEffect")
-      const isLiftedItem = item.getFlag(MODULE_ID, "isLiftedItem")
-      if (!isPositionEffect && !isLiftingEffect && !isLiftedItem) return
-
-      const toDelete = []
-      for (const i of actor.items) {
-         if (i.id === item.id) continue
-         if (i.getFlag(MODULE_ID, "siegeId") !== siegeId) continue
-         if (isPositionEffect) {
-            if (
-               i.getFlag(MODULE_ID, "isLiftingEffect") ||
-               i.getFlag(MODULE_ID, "isLiftedItem")
-            ) {
-               toDelete.push(i.id)
-            }
-         } else if (isLiftingEffect && i.getFlag(MODULE_ID, "isLiftedItem")) {
-            toDelete.push(i.id)
-         } else if (
-            isLiftedItem &&
-            i.type === "effect" &&
-            i.getFlag(MODULE_ID, "isLiftingEffect")
-         ) {
-            toDelete.push(i.id)
+      await this.enqueue(siegeId, async () => {
+         if (item.type === "effect" && item.getFlag(MODULE_ID, "isCrewLeader")) {
+            if (options.siegeLeadershipDelegation) return
+            await this._reassignCrewLeader(siegeId, item.parent.id)
+            return
          }
+
+         if (item.type === "effect" && item.getFlag(MODULE_ID, "position")) {
+            await this._onPositionDeleted(item, siegeId)
+            return
+         }
+
+         if (
+            item.type === "effect" &&
+            item.getFlag(MODULE_ID, "isLiftingEffect")
+         ) {
+            await this._onLiftingEffectDeleted(item, siegeId)
+            return
+         }
+
+         if (item.getFlag(MODULE_ID, "isLiftedItem")) {
+            const actor = item.parent
+            const linkedEffect = actor.items.find(
+               (i) =>
+                  i.type === "effect" &&
+                  i.getFlag(MODULE_ID, "isLiftingEffect") &&
+                  i.getFlag(MODULE_ID, "siegeId") === siegeId,
+            )
+            if (linkedEffect)
+               await actor.deleteEmbeddedDocuments("Item", [linkedEffect.id], {
+                  siegeDropCascade: true,
+               })
+         }
+      })
+   }
+
+   static async _onPositionDeleted(item, siegeId) {
+      const actor = item.parent
+      const siege = this._getSiegeActor(siegeId)
+      if (!actor || !siege) return
+      const totalBulkOverride = this._forcedDropTotalBulk(siege, 0)
+
+      const liftingEffect = actor.items.find(
+         (i) =>
+            i.type === "effect" &&
+            i.getFlag(MODULE_ID, "isLiftingEffect") &&
+            i.getFlag(MODULE_ID, "siegeId") === siegeId,
+      )
+      const liftedItem = actor.items.find(
+         (i) =>
+            i.getFlag(MODULE_ID, "isLiftedItem") &&
+            i.getFlag(MODULE_ID, "siegeId") === siegeId,
+      )
+      const leaderEffect = actor.items.find(
+         (i) =>
+            i.getFlag(MODULE_ID, "isCrewLeader") &&
+            i.getFlag(MODULE_ID, "siegeId") === siegeId,
+      )
+
+      let oldBulk = 0
+      const toDelete = []
+      if (liftingEffect) {
+         oldBulk = liftingEffect.system.badge?.value || 0
+         toDelete.push(liftingEffect.id)
       }
-      if (toDelete.length > 0) {
+      if (liftedItem) toDelete.push(liftedItem.id)
+      if (leaderEffect) {
+         toDelete.push(leaderEffect.id)
+         await this._reassignCrewLeader(siegeId, actor.id)
+      }
+      if (toDelete.length > 0)
          await actor.deleteEmbeddedDocuments("Item", toDelete, {
             siegeDropCascade: true,
          })
-      }
 
-      await this.syncPortableState(siege, item.id)
-   }
-
-   static async _syncPair(actor, siege, source, newBulk) {
-      const liftingEffect = actor.items.find(
-         (i) =>
-            i.type === "effect" &&
-            i.getFlag(MODULE_ID, "isLiftingEffect") &&
-            i.getFlag(MODULE_ID, "siegeId") === siege.id,
-      )
-      const liftedItem = actor.items.find(
-         (i) =>
-            i.getFlag(MODULE_ID, "isLiftedItem") &&
-            i.getFlag(MODULE_ID, "siegeId") === siege.id,
-      )
-
-      if (
-         source === "effect" &&
-         liftedItem &&
-         (liftedItem.system?.bulk?.value || 0) !== newBulk
-      ) {
-         await liftedItem.update(
-            { "system.bulk.value": newBulk },
-            { siegeDropCascade: true },
-         )
-      } else if (
-         source === "item" &&
-         liftingEffect &&
-         (liftingEffect.system?.badge?.value || 0) !== newBulk
-      ) {
-         await liftingEffect.update(
-            { "system.badge.value": newBulk },
-            { siegeDropCascade: true },
-         )
-      }
-   }
-
-   static async _setLifterBulk(lifter, siege, newBulk) {
-      const { liftedItem, liftingEffect } = lifter
-      if (liftedItem && (liftedItem.system?.bulk?.value || 0) !== newBulk) {
-         await liftedItem.update(
-            { "system.bulk.value": newBulk },
-            { siegeDropCascade: true },
-         )
-      }
-      if (liftingEffect) {
-         if ((liftingEffect.system?.badge?.value || 0) !== newBulk) {
-            await liftingEffect.update(
-               { "system.badge.value": newBulk },
-               { siegeDropCascade: true },
-            )
+      if (oldBulk > 0) {
+         const forcedTotal = this._forcedDropTotalBulk(siege, oldBulk)
+         const success = await this._redistributeFreed(siege, oldBulk, actor.id)
+         if (!success) {
+            await this._clearPortableMarkers(siege, { clearSiegeMarkers: false })
+            await this._doSyncPortableState(siege, null, true, forcedTotal)
+         } else {
+            await this._doSyncPortableState(siege)
          }
+      } else if (totalBulkOverride > 0) {
+         await this._doSyncPortableState(siege, null, false, totalBulkOverride)
       }
    }
 
-   static async _syncPair(actor, siege, source, newBulk) {
-      const liftingEffect = actor.items.find(
+   static async _onLiftingEffectDeleted(item, siegeId) {
+      const actor = item.parent
+      const siege = this._getSiegeActor(siegeId)
+      if (!actor || !siege) return
+
+      const leaderEffect = actor.items.find(
          (i) =>
-            i.type === "effect" &&
-            i.getFlag(MODULE_ID, "isLiftingEffect") &&
-            i.getFlag(MODULE_ID, "siegeId") === siege.id,
+            i.getFlag(MODULE_ID, "isCrewLeader") &&
+            i.getFlag(MODULE_ID, "siegeId") === siegeId,
       )
+      if (leaderEffect) {
+         await actor.deleteEmbeddedDocuments("Item", [leaderEffect.id], {
+            siegeDropCascade: true,
+         })
+         await this._reassignCrewLeader(siegeId, actor.id)
+      }
+
+      const linkedItem = actor.items.find(
+         (i) =>
+            i.getFlag(MODULE_ID, "isLiftedItem") &&
+            i.getFlag(MODULE_ID, "siegeId") === siegeId,
+      )
+      if (linkedItem)
+         await actor.deleteEmbeddedDocuments("Item", [linkedItem.id], {
+            siegeDropCascade: true,
+         })
+
+      const oldBulk = item.system.badge?.value || 0
+      const forcedTotal = this._forcedDropTotalBulk(siege, oldBulk)
+      const success = await this._redistributeFreed(siege, oldBulk, actor.id)
+      if (!success) {
+         await this._clearPortableMarkers(siege, { clearSiegeMarkers: false })
+         await this._doSyncPortableState(siege, item.id, true, forcedTotal)
+      } else {
+         await this._doSyncPortableState(siege, item.id)
+      }
+   }
+
+   static _forcedDropTotalBulk(siege, freedBulk) {
+      const direct = portableBulk(siege)
+      const dropped = this._portableMarkerBulk(siege, tKey("Markers.Dropped"))
+      return Math.max(Number(direct) || 0, dropped + (Number(freedBulk) || 0))
+   }
+
+   static async _syncPair(actor, siege, newBulk) {
+      const siegeIds = siegeIdsFor(siege)
       const liftedItem = actor.items.find(
          (i) =>
             i.getFlag(MODULE_ID, "isLiftedItem") &&
-            i.getFlag(MODULE_ID, "siegeId") === siege.id,
+            itemMatchesSiege(i, siegeIds),
       )
-
-      if (
-         source === "effect" &&
-         liftedItem &&
-         (liftedItem.system?.bulk?.value || 0) !== newBulk
-      ) {
-         await liftedItem.update(
-            { "system.bulk.value": newBulk },
+      if (liftedItem && (liftedItem.system?.bulk?.value || 0) !== newBulk)
+         await actor.updateEmbeddedDocuments(
+            "Item",
+            [{ _id: liftedItem.id, "system.bulk.value": newBulk }],
             { siegeDropCascade: true },
          )
-      } else if (
-         source === "item" &&
-         liftingEffect &&
-         (liftingEffect.system?.badge?.value || 0) !== newBulk
-      ) {
-         await liftingEffect.update(
-            { "system.badge.value": newBulk },
-            { siegeDropCascade: true },
-         )
-      }
-   }
-
-   static async _refreshLiftingName(actor, siege, newBulk) {
-      const liftingEffect = actor.items.find(
-         (i) =>
-            i.type === "effect" &&
-            i.getFlag(MODULE_ID, "isLiftingEffect") &&
-            i.getFlag(MODULE_ID, "siegeId") === siege.id,
-      )
-      if (!liftingEffect) return
-      const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
-      const newName = tKey("Markers.LiftingEffect", {
-         bulk: newBulk,
-         total: totalBulk,
-      })
-      if (liftingEffect.name === newName) return
-      await liftingEffect.update({ name: newName }, { siegeDropCascade: true })
    }
 
    static async _redistributeFreed(siege, freedBulk, excludeActorId) {
-      if (freedBulk <= 0) return 0
-      const others = this._collectLifters(siege, { excludeActorId })
-      if (others.length === 0) return freedBulk
+      if (freedBulk <= 0) return true
+      const others = collectLifters(siege, { excludeActorId })
+      if (others.length === 0) return false
 
-      const assignments = new Map(
-         others.map((o) => [o.actor.id, o.currentBulk]),
-      )
+      const assignments = new Map(others.map((o) => [o.actor.id, o.currentBulk]))
       let remaining = freedBulk
-      const guardMax = remaining * others.length + 1
-      let guard = guardMax
+      let possible = true
 
-      while (remaining > 0 && guard-- > 0) {
-         let target = null
-         let targetCurrent = Infinity
+      while (remaining > 0 && possible) {
+         possible = false
+         others.sort(
+            (a, b) => assignments.get(a.actor.id) - assignments.get(b.actor.id),
+         )
          for (const o of others) {
+            if (remaining <= 0) break
             const current = assignments.get(o.actor.id)
-            if (current >= o.capacity) continue
-            if (current < targetCurrent) {
-               target = o
-               targetCurrent = current
-            }
+            if (o.baseOtherBulk + current + 1 >= o.maxLimit) continue
+            assignments.set(o.actor.id, current + 1)
+            remaining -= 1
+            possible = true
          }
-         if (!target) break
-         assignments.set(target.actor.id, targetCurrent + 1)
-         remaining -= 1
       }
+
+      if (remaining > 0) return false
 
       for (const o of others) {
          const newBulk = assignments.get(o.actor.id)
-         if (newBulk === o.currentBulk) continue
-         await this._setLifterBulk(o, siege, newBulk)
+         if (newBulk !== o.currentBulk) await this._setLifterBulk(o, newBulk)
       }
-
-      return remaining
+      return true
    }
 
-   static async _setLifterBulk(lifter, siege, newBulk) {
-      const { liftedItem, liftingEffect } = lifter
-      if (liftedItem && (liftedItem.system?.bulk?.value || 0) !== newBulk) {
-         await liftedItem.update(
-            { "system.bulk.value": newBulk },
-            { siegeDropCascade: true },
-         )
-      }
-      if (liftingEffect) {
-         const updates = {}
-         if ((liftingEffect.system?.badge?.value || 0) !== newBulk) {
-            updates["system.badge.value"] = newBulk
-         }
-         const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
-         const newName = tKey("Markers.LiftingEffect", {
-            bulk: newBulk,
-            total: totalBulk,
+   static async _setLifterBulk(lifter, newBulk) {
+      const { actor, liftedItem, liftingEffect } = lifter
+      const updates = []
+      if (liftedItem && (liftedItem.system?.bulk?.value || 0) !== newBulk)
+         updates.push({ _id: liftedItem.id, "system.bulk.value": newBulk })
+      if (liftingEffect && (liftingEffect.system?.badge?.value || 0) !== newBulk)
+         updates.push({ _id: liftingEffect.id, "system.badge.value": newBulk })
+      if (updates.length > 0)
+         await actor.updateEmbeddedDocuments("Item", updates, {
+            siegeDropCascade: true,
          })
-         if (liftingEffect.name !== newName) updates.name = newName
-         if (Object.keys(updates).length > 0) {
-            await liftingEffect.update(updates, { siegeDropCascade: true })
-         }
-      }
    }
 
-   static async syncPortableState(siege, deletedItemId = null) {
+   static async _reassignCrewLeader(siegeId, excludeActorId) {
+      const siege = this._getSiegeActor(siegeId)
       if (!siege) return
-      const traits = siege.system.traits?.value || []
-      if (!traits.includes("portable")) {
-         await this._clearPortableMarkers(siege)
+      const candidates = collectLifters(siege, { excludeActorId }).filter(
+         (l) => l.currentBulk > 0,
+      )
+      if (candidates.length === 0) return
+      const target =
+         candidates[Math.floor(Math.random() * candidates.length)].actor
+      await SiegeSocketManager.modifySiegeItem(target.uuid, "create", [
+         buildCrewLeaderEffect(siegeId),
+      ])
+   }
+
+   static async syncPortableState(
+      siege,
+      deletedItemId = null,
+      forceDrop = false,
+      totalBulkOverride = null,
+   ) {
+      if (!siege) return
+      if (!game.user.isGM) {
+         if (globalThis.siegeSocket)
+            await globalThis.siegeSocket.executeAsGM(
+               "syncPortableState",
+               siege.uuid,
+               deletedItemId,
+               forceDrop,
+               totalBulkOverride,
+            )
          return
       }
+      await this.enqueue(siege.id, () =>
+         this._doSyncPortableState(
+            siege,
+            deletedItemId,
+            forceDrop,
+            totalBulkOverride,
+         ),
+      )
+   }
 
-      const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
+   static async _doSyncPortableState(
+      siege,
+      deletedItemId = null,
+      forceDrop = false,
+      totalBulkOverride = null,
+   ) {
+      if (!siege) return
+      const siegeIds = siegeIdsFor(siege)
+
+      if (!(siege.system.traits?.value || []).includes("portable")) {
+         await this._clearPortableMarkers(siege)
+         forceDrop = true
+      }
+
+      const totalBulk = Math.max(
+         Number(portableBulk(siege)) || 0,
+         Number(totalBulkOverride) || 0,
+      )
       let currentlyLifted = 0
-
-      const allActors = new Set([
-         ...game.actors,
-         ...(canvas?.tokens?.placeables?.map((t) => t.actor).filter(Boolean) ||
-            []),
-      ])
-
-      for (const actor of allActors) {
-         if (!actor) continue
-         const effects = actor.items.filter(
-            (i) =>
-               i.id !== deletedItemId &&
-               i.type === "effect" &&
-               i.getFlag(MODULE_ID, "isLiftingEffect") &&
-               i.getFlag(MODULE_ID, "siegeId") === siege.id,
-         )
-         for (const e of effects) currentlyLifted += e.system.badge?.value || 0
+      if (!forceDrop) {
+         for (const actor of getAllActors()) {
+            const effects = actor.items.filter(
+               (i) =>
+                  i.id !== deletedItemId &&
+                  i.type === "effect" &&
+                  i.getFlag(MODULE_ID, "isLiftingEffect") &&
+                   itemMatchesSiege(i, siegeIds),
+            )
+            for (const e of effects) {
+               const value = e.system.badge?.value || 0
+               currentlyLifted += value
+            }
+         }
       }
 
       const droppedRemaining = Math.max(0, totalBulk - currentlyLifted)
       const droppedName = tKey("Markers.Dropped")
       const liftedName = tKey("Markers.Lifted")
-      const existingDropped = siege.itemTypes.effect.find(
-         (e) =>
-            e.name === droppedName && e.getFlag(MODULE_ID, "isPortableMarker"),
-      )
-      const existingLifted = siege.itemTypes.effect.find(
-         (e) =>
-            e.name === liftedName && e.getFlag(MODULE_ID, "isPortableMarker"),
-      )
+      const droppedMarkers = this._relatedPortableMarkers(siege, droppedName)
+      const liftedMarkers = this._relatedPortableMarkers(siege, liftedName)
 
-      if (totalBulk === 0 || droppedRemaining === 0) {
-         if (existingDropped) {
-            await existingDropped.delete({ systemDeletion: true })
+      if (droppedRemaining <= 0 && totalBulk > 0) {
+         if (droppedMarkers.length > 0) {
+            for (const marker of droppedMarkers) await this._deleteMarker(marker)
          }
-         if (!existingLifted) {
-            await siege.createEmbeddedDocuments("Item", [
+         if (liftedMarkers.length === 0) {
+            const markerActor = droppedMarkers[0]?.actor ?? siege
+            await SiegeSocketManager.modifySiegeItem(markerActor.uuid, "create", [
                {
                   name: liftedName,
                   type: "effect",
@@ -396,21 +480,30 @@ export class SiegePortableManager {
                   flags: { [MODULE_ID]: { isPortableMarker: true } },
                },
             ])
+         } else if (liftedMarkers.length > 1) {
+            for (const marker of liftedMarkers.slice(1))
+               await this._deleteMarker(marker)
          }
       } else {
-         if (existingLifted) {
-            await existingLifted.delete({ systemDeletion: true })
+         if (liftedMarkers.length > 0) {
+            for (const marker of liftedMarkers) await this._deleteMarker(marker)
          }
-         if (existingDropped) {
-            if (
-               (existingDropped.system.badge?.value || 0) !== droppedRemaining
-            ) {
-               await existingDropped.update({
-                  "system.badge.value": droppedRemaining,
-               })
+         if (droppedMarkers.length > 0) {
+            const primary = droppedMarkers[0]
+            if (primary.item.system.badge?.value !== droppedRemaining) {
+               await SiegeSocketManager.modifySiegeItem(
+                  primary.actor.uuid,
+                  "update",
+                  [{ _id: primary.item.id, "system.badge.value": droppedRemaining }],
+               )
             }
-         } else {
-            await siege.createEmbeddedDocuments("Item", [
+            if (droppedMarkers.length > 1) {
+               for (const marker of droppedMarkers.slice(1))
+                  await this._deleteMarker(marker)
+            }
+         } else if (totalBulk > 0) {
+            const markerActor = liftedMarkers[0]?.actor ?? siege
+            await SiegeSocketManager.modifySiegeItem(markerActor.uuid, "create", [
                {
                   name: droppedName,
                   type: "effect",
@@ -432,96 +525,54 @@ export class SiegePortableManager {
       }
 
       if (siege.sheet?.rendered) siege.sheet.render(false)
+      const { SiegeCrewManager } = await import("./crew.mjs")
+      await SiegeCrewManager.updateSiegeSpeed(siege)
    }
 
-   static async _clearPortableMarkers(siege) {
-      for (const actor of game.actors) {
+   static async _clearPortableMarkers(siege, { clearSiegeMarkers = true } = {}) {
+      const siegeIds = siegeIdsFor(siege)
+      if (clearSiegeMarkers) {
+         for (const related of relatedSiegeActors(siege)) {
+            const markerIds = related.itemTypes.effect
+               .filter((i) => i.getFlag(MODULE_ID, "isPortableMarker"))
+               .map((i) => i.id)
+            if (markerIds.length > 0)
+               await SiegeSocketManager.modifySiegeItem(
+                  related.uuid,
+                  "delete",
+                  markerIds,
+                  { systemDeletion: true },
+               )
+         }
+      }
+
+      for (const actor of getAllActors()) {
          const ids = actor.items
             .filter(
                (i) =>
-                  i.getFlag(MODULE_ID, "siegeId") === siege.id &&
+                  itemMatchesSiege(i, siegeIds) &&
                   (i.getFlag(MODULE_ID, "isLiftingEffect") ||
-                     i.getFlag(MODULE_ID, "isLiftedItem")),
+                     i.getFlag(MODULE_ID, "isLiftedItem") ||
+                     i.getFlag(MODULE_ID, "isCrewLeader")),
             )
             .map((i) => i.id)
-         if (ids.length > 0) {
+         if (ids.length > 0)
             await actor.deleteEmbeddedDocuments("Item", ids, {
                siegeDropCascade: true,
             })
-         }
-      }
-      const markers = siege.itemTypes.effect.filter((e) =>
-         e.getFlag(MODULE_ID, "isPortableMarker"),
-      )
-      if (markers.length > 0) {
-         await siege.deleteEmbeddedDocuments(
-            "Item",
-            markers.map((m) => m.id),
-            { systemDeletion: true },
-         )
       }
    }
 
    static _getLifterCapacity(actor, currentLiftedBulk = 0) {
-      const strMod = actor?.system?.abilities?.str?.mod ?? 0
-      const bulkAttr = actor?.system?.attributes?.bulk || {}
-
-      const encumberedAfter = Number(bulkAttr.encumberedAfter) || 5 + strMod
-      const maxLimit = Number(bulkAttr.maxLimit ?? bulkAttr.max) || 10 + strMod
-
-      let totalCarried = 0
-      const invBulk = actor?.inventory?.bulk?.value ?? bulkAttr.value
-      if (typeof invBulk === "number") totalCarried = invBulk
-      else if (invBulk !== null && typeof invBulk === "object")
-         totalCarried = Number(invBulk.normal) || 0
-      else totalCarried = Number(invBulk) || 0
-
-      const lifted = Number(currentLiftedBulk) || 0
-      const otherBulk = Math.max(0, totalCarried - lifted)
-
-      return {
-         encumberedAfter,
-         maxLimit,
-         otherBulk,
-         capacity: Math.max(0, Math.floor(maxLimit - otherBulk)),
-      }
+      return getLifterCapacity(actor, currentLiftedBulk)
    }
 
-   static _collectLifters(siege, { excludeActorId = null } = {}) {
-      const lifters = []
-      for (const actor of game.actors) {
-         if (excludeActorId && actor.id === excludeActorId) continue
-
-         const liftingEffect = actor.items.find(
-            (i) =>
-               i.type === "effect" &&
-               i.getFlag(MODULE_ID, "isLiftingEffect") &&
-               i.getFlag(MODULE_ID, "siegeId") === siege.id,
-         )
-         const liftedItem = actor.items.find(
-            (i) =>
-               i.getFlag(MODULE_ID, "isLiftedItem") &&
-               i.getFlag(MODULE_ID, "siegeId") === siege.id,
-         )
-         if (!liftedItem && !liftingEffect) continue
-
-         const currentBulk = liftingEffect
-            ? liftingEffect.system.badge?.value || 0
-            : liftedItem?.system?.bulk?.value || 0
-         const capData = this._getLifterCapacity(actor, currentBulk)
-
-         lifters.push({
-            actor,
-            liftedItem,
-            liftingEffect,
-            currentBulk,
-            capacity: capData.capacity,
-         })
-      }
-      return lifters
+   static _collectLifters(siege, options = {}) {
+      return collectLifters(siege, options)
    }
 
    static async rebalanceLifters(siege) {
+      if (!game.user.isGM || !siege) return
       await this.syncPortableState(siege)
    }
 }

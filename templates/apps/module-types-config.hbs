@@ -1,0 +1,15 @@
+<div class="siege-module-types">
+   <p class="notes">{{labels.hint}}</p>
+   <div class="siege-module-type-list">
+      {{#each types}}
+         <div class="siege-module-type-row" data-index="{{index}}">
+            <input type="text" class="siege-module-type-input" value="{{value}}">
+            <button type="button" class="siege-module-type-remove"><i class="fa-solid fa-trash"></i></button>
+         </div>
+      {{/each}}
+   </div>
+   <div class="siege-module-type-actions">
+      <button type="button" class="siege-module-type-add"><i class="fa-solid fa-plus"></i> {{labels.add}}</button>
+      <button type="button" class="siege-module-type-save"><i class="fa-solid fa-save"></i> {{labels.save}}</button>
+   </div>
+</div>

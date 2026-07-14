@@ -1,0 +1,83 @@
+.siege-consequence-card .siege-consequence-card-body {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-consequence-card .siege-consequence-roll {
+   margin: 2px 0 4px;
+}
+.siege-consequence-card .siege-consequence-instance {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   color: var(--siege-consequence-color);
+}
+.siege-consequence-card .siege-consequence-roll-title,
+.siege-consequence-card .siege-consequence-target-title {
+   margin: 3px 0;
+   color: #38445f;
+   font-size: 0.78rem;
+   font-weight: 700;
+}
+.siege-consequence-card .hidden,
+.siege-consequence-card .die.hidden,
+.siege-consequence-card .degree.hidden,
+.siege-consequence-card .siege-save-hp-button.hidden,
+.siege-consequence-card .damage-application.hidden {
+   display: none !important;
+}
+.siege-consequence-card .target-header .name {
+   display: inline-flex;
+   align-items: center;
+   gap: 5px;
+   min-width: 0;
+   font-weight: 700;
+}
+.siege-consequence-card .siege-consequence-target-main {
+   display: flex;
+   min-width: 0;
+   align-items: center;
+   gap: 6px;
+   font-weight: 700;
+}
+.siege-consequence-card .siege-consequence-target-main img {
+   width: 24px;
+   height: 24px;
+   flex: 0 0 24px;
+   border: 0;
+   border-radius: 3px;
+   object-fit: cover;
+}
+.siege-consequence-card .siege-consequence-target-main span {
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+.siege-consequence-card .siege-consequence-application.applied {
+   filter: grayscale(0.4);
+   opacity: 0.55;
+}
+.siege-consequence-card .siege-save-consequence-list {
+   margin-top: 2px;
+}
+.siege-consequence-card .siege-save-hp-consequence {
+   margin: 4px 0;
+}
+.siege-consequence-card .siege-save-hp-consequence .atw-mtcard-damage {
+   margin: 4px 0 3px;
+}
+.siege-consequence-card .degree.critical-success,
+.siege-consequence-card .degree.success,
+.siege-consequence-card .degree.failure,
+.siege-consequence-card .degree.critical-failure {
+   font-weight: 700;
+}
+.siege-consequence-card .dice-roll.damage-roll {
+   cursor: pointer;
+}
+.siege-consequence-card .dice-tooltip {
+   display: none;
+}
+.siege-consequence-card .dice-roll.expanded .dice-tooltip {
+   display: block;
+}

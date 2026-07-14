@@ -1,0 +1,44 @@
+<div class="siege-crew-portrait">
+   <div class="scp-row">
+      <label>{{labels.backgroundImage}}</label>
+      <button class="scp-pick" data-target="background" data-tooltip="{{labels.pickImage}}"><i class="fa-solid fa-file-image"></i></button>
+      <input type="text" class="scp-path scp-bg-path" value="{{backgroundSrc}}" readonly>
+   </div>
+   <div class="scp-row">
+      <label>{{labels.foregroundImage}}</label>
+      <button class="scp-pick" data-target="foreground" data-tooltip="{{labels.pickImage}}"><i class="fa-solid fa-file-image"></i></button>
+      <input type="text" class="scp-path scp-fg-path" value="{{foregroundSrc}}" readonly>
+   </div>
+   <div class="scp-preview-wrap">
+      <div class="scp-preview crew-card crew-card-parallelogram">
+         <div class="crew-card-inner">
+            <img class="scp-preview-bg" src="{{backgroundSrc}}" style="{{{backgroundStyle}}}">
+            <img class="scp-preview-portrait scp-preview-img" src="{{foregroundSrc}}" style="{{{foregroundStyle}}}">
+         </div>
+      </div>
+   </div>
+   <div class="scp-controls">
+      <label>{{labels.backgroundZoom}}
+         <input type="range" class="scp-bg-zoom" min="100" max="300" value="{{backgroundZoom}}">
+      </label>
+      <label>{{labels.backgroundX}}
+         <input type="range" class="scp-bg-x" min="{{backgroundMin}}" max="{{backgroundMax}}" step="0.1" value="{{backgroundOffsetX}}">
+      </label>
+      <label>{{labels.backgroundY}}
+         <input type="range" class="scp-bg-y" min="{{backgroundMin}}" max="{{backgroundMax}}" step="0.1" value="{{backgroundOffsetY}}">
+      </label>
+      {{#unless vehiclePortrait}}
+         <label class="scp-allveh">
+            <input type="checkbox" class="scp-all" {{#if applyToAll}}checked{{/if}}> {{labels.applyAllVehicles}}
+         </label>
+      {{/unless}}
+   </div>
+   <p class="scp-dim-hint"><i class="fa-solid fa-circle-info"></i> {{labels.optimalDimensions}}</p>
+   <div class="scp-buttons">
+      <button class="scp-save"><i class="fa-solid fa-check"></i> {{labels.save}}</button>
+      <button class="scp-reset"><i class="fa-solid fa-rotate-left"></i> {{labels.reset}}</button>
+      {{#if showAllButton}}
+         <button class="scp-show"><i class="fa-solid fa-eye"></i> {{labels.showAll}}</button>
+      {{/if}}
+   </div>
+</div>

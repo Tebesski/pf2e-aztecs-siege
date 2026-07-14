@@ -1,0 +1,151 @@
+.siege-crew-hud-app,
+.siege-vehicle-hud-app {
+   overflow: visible;
+}
+.crew-bookmarks {
+   position: absolute;
+   left: 100%;
+   top: 40px;
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   z-index: 7;
+}
+.crew-bookmark {
+   width: 34px;
+   height: 46px;
+   background: linear-gradient(160deg, #11337a, #0a1a3f);
+   color: #cfe0ff;
+   border: 1px solid #2a4f9e;
+   border-left: none;
+   border-radius: 0 8px 8px 0;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 1rem;
+   transition: filter 0.12s ease;
+}
+.crew-bookmark:hover:not(:disabled) {
+   filter: brightness(1.3);
+}
+.crew-bookmark-active {
+   background: linear-gradient(160deg, #2255cc, #11337a);
+   color: #fff;
+   border-color: #4f8cff;
+   box-shadow: 2px 0 6px rgba(79, 140, 255, 0.4);
+}
+.crew-bookmark:disabled {
+   opacity: 0.55;
+   cursor: default;
+}
+
+.siege-crew-dossier-app .window-content {
+   background: linear-gradient(160deg, #0a1a3f, #050d22);
+   padding: 0;
+   max-height: 700px;
+   overflow-y: auto;
+}
+.siege-crew-dossier {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+   color: #eaf1ff;
+   padding: 14px;
+}
+.siege-crew-dossier .scd-header {
+   display: flex;
+   gap: 12px;
+   align-items: center;
+   border-bottom: 1px solid #2a4f9e;
+   padding-bottom: 12px;
+}
+.siege-crew-dossier .scd-portrait {
+   position: relative;
+   width: 84px;
+   height: 110px;
+   flex: 0 0 auto;
+   border: 2px solid #4f8cff;
+   border-radius: 6px;
+   overflow: hidden;
+   box-shadow: 0 0 8px rgba(79, 140, 255, 0.35);
+}
+.siege-crew-dossier .scd-portrait-img {
+   display: block;
+}
+.siege-crew-dossier .scd-id {
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+.siege-crew-dossier .scd-name {
+   font-size: 1.3rem;
+   font-weight: 700;
+   color: #fff;
+}
+.siege-crew-dossier .scd-pos {
+   color: #74a9ff;
+   font-weight: 600;
+}
+.siege-crew-dossier .scd-vehicle {
+   font-size: 0.85rem;
+   opacity: 0.7;
+   font-style: italic;
+}
+.siege-crew-dossier .scd-section-title {
+   text-transform: uppercase;
+   letter-spacing: 0.08em;
+   font-size: 0.72rem;
+   color: #74a9ff;
+   margin-bottom: 5px;
+}
+.siege-crew-dossier .scd-hp-bar {
+   position: relative;
+   width: 100%;
+   height: 22px;
+   background: rgba(0, 0, 0, 0.4);
+   border: 1px solid #2a4f9e;
+   border-radius: 5px;
+   overflow: hidden;
+}
+.siege-crew-dossier .scd-hp-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   transition: width 0.3s ease;
+}
+.siege-crew-dossier .scd-hp-text {
+   position: absolute;
+   inset: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 0.8rem;
+   font-weight: 600;
+   text-shadow: 0 1px 2px #000;
+}
+.siege-crew-dossier .scd-actions {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+   display: flex;
+   flex-direction: column;
+   gap: 4px;
+}
+.siege-crew-dossier .scd-actions li {
+   background: rgba(17, 51, 122, 0.4);
+   border: 1px solid #1d3a73;
+   border-radius: 4px;
+   padding: 5px 8px;
+   font-size: 0.9rem;
+}
+.siege-crew-dossier .scd-actions li i {
+   color: #4f8cff;
+   margin-right: 6px;
+}
+.siege-crew-dossier .scd-actions .scd-none {
+   opacity: 0.6;
+   font-style: italic;
+   background: transparent;
+   border: none;
+}
+

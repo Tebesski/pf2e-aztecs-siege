@@ -1,0 +1,542 @@
+.siege-ammo-types .items {
+   list-style: none;
+   padding: 0;
+   margin: 0;
+   border: 1px solid var(--color-border-dark-5);
+   border-top: none;
+}
+.siege-bulk-row {
+   display: flex;
+   gap: 10px;
+}
+.siege-bulk-col {
+   display: flex;
+   flex-direction: column;
+   flex: 1 1 120px;
+   min-width: 110px;
+}
+.siege-bulk-label {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+}
+.siege-load-total-bulk,
+.siege-load-gauge {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   width: 100%;
+   box-sizing: border-box;
+}
+.siege-load-gauge {
+   position: relative;
+   overflow: hidden;
+   min-height: 24px;
+   padding: 0;
+   border: 1px solid rgba(0, 0, 0, 0.25);
+   background: rgba(17, 51, 122, 0.22);
+   font-weight: 700;
+}
+.siege-load-fill {
+   position: absolute;
+   inset: 0 auto 0 0;
+   width: var(--siege-load-percent, 0%);
+   background: var(--siege-load-color, #2f8f46);
+   box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.16);
+   transition: width 180ms ease, background-color 180ms ease;
+}
+.siege-load-gauge-content {
+   position: relative;
+   z-index: 1;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   width: 100%;
+   padding: 3px 6px;
+   color: #f8f1dc;
+   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+}
+.siege-load-encumbered {
+   color: #fff3cf;
+   border-color: rgba(194, 143, 36, 0.7);
+}
+.siege-load-maxed {
+   color: #ffd6de;
+   border-color: rgba(215, 48, 80, 0.85);
+}
+.siege-weapon-toggle {
+   margin-top: 10px;
+   padding-top: 10px;
+   border-top: 1px solid var(--color-border-dark);
+   display: flex;
+   flex-direction: row;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 8px 12px;
+   width: 100%;
+   flex: 0 0 100%;
+}
+.siege-mountable-toggle,
+.siege-needs-ignition-toggle {
+   margin-top: 5px;
+   border-top: none;
+   padding-top: 0;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 8px;
+}
+
+.siege-ignition-slugs-input {
+   flex: 1 1 16rem;
+   min-width: 12rem;
+   max-width: 22rem;
+}
+
+.siege-charged-unload-list {
+   display: grid;
+   gap: 0.35rem;
+   margin-top: 0.35rem;
+}
+
+.siege-charged-unload-piece {
+   display: flex;
+   align-items: center;
+   gap: 0.45rem;
+}
+
+.siege-checkbox {
+   width: 16px;
+   height: 16px;
+   margin: 0;
+   flex: 0 0 auto;
+}
+.siege-checkbox-label {
+   font-weight: bold;
+   cursor: pointer;
+   margin: 0;
+   white-space: nowrap;
+}
+.siege-checkbox-label-normal {
+   font-weight: normal;
+}
+
+.siege-inline-toggle {
+   display: inline-flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 6px;
+   margin-left: auto;
+   padding-left: 12px;
+   border-left: 1px solid var(--color-border-dark);
+}
+.siege-info-icon {
+   opacity: 0.7;
+   cursor: help;
+   font-size: 0.85em;
+}
+.siege-info-icon:hover {
+   opacity: 1;
+}
+
+.siege-drivable-toggle,
+.siege-rotatable-toggle,
+.siege-target-crewmembers-toggle {
+   margin-top: 5px;
+   padding-left: 24px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 8px;
+}
+
+.crew-managed-lock {
+   opacity: 0.6;
+   cursor: not-allowed;
+}
+.siege-crew-reflex-config {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+   padding: 8px;
+}
+.siege-crew-reflex-check {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin: 0;
+}
+.siege-crew-reflex-check input {
+   flex: 0 0 auto;
+}
+.siege-crew-extra-separator {
+   width: 100%;
+   margin: 2px 0;
+}
+.siege-crew-target-dialog {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-crew-target-dialog fieldset {
+   border: 1px solid rgba(40, 70, 120, 0.35);
+   border-radius: 4px;
+   padding: 6px 8px;
+}
+.siege-crew-target-dialog legend {
+   color: var(--siege-cobalt, #173c78);
+   font-weight: 700;
+   padding: 0 4px;
+}
+.siege-crew-target-option {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin: 4px 0;
+}
+.siege-crew-target-empty {
+   margin: 0;
+   opacity: 0.78;
+}
+.action-icon {
+   width: 24px;
+   height: 24px;
+   border: none;
+   border-radius: 3px;
+}
+.details-desc {
+   margin-bottom: 10px;
+   font-size: 0.9em;
+   line-height: 1.4;
+}
+.details-buttons {
+   display: flex;
+   gap: 5px;
+   flex-wrap: wrap;
+   border-top: 1px solid var(--color-border-dark);
+   padding-top: 8px;
+}
+.details-buttons .siege-action-btn-wide {
+   flex: 1 0 100%;
+   justify-content: center;
+}
+
+.form-group.align-top {
+   align-items: flex-start;
+}
+
+.form-group.align-top > label {
+   line-height: var(--form-field-height, 24px);
+   margin-top: 0;
+   padding-top: 0;
+}
+
+.prereq-count-input::-webkit-outer-spin-button,
+.prereq-count-input::-webkit-inner-spin-button {
+   -webkit-appearance: none;
+   margin: 0;
+}
+
+.siege-prereq-count {
+   width: 24px;
+   height: 16px;
+   font-size: 11px;
+   padding: 0 2px;
+   text-align: center;
+   border: 1px solid rgba(0, 0, 0, 0.2);
+   border-radius: 2px;
+   background: rgba(255, 255, 255, 0.1);
+   color: inherit;
+   margin-left: 4px;
+}
+.siege-prereq-count-display {
+   margin-left: 4px;
+   padding: 1px 5px;
+   border-radius: 3px;
+   background: rgba(0, 0, 0, 0.16);
+   font-size: 11px;
+   line-height: 1.2;
+}
+
+.siege-repair-formula {
+   margin-top: 6px;
+   padding: 6px 8px;
+   border: 1px solid rgba(0, 0, 0, 0.16);
+   border-radius: 4px;
+   background: rgba(255, 255, 255, 0.08);
+   font-size: 0.92em;
+}
+.siege-repair-formula p {
+   margin: 3px 0;
+}
+.siege-repair-eyepiece {
+   opacity: 0.82;
+}
+
+.siege-inline-checkbox {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+   font-weight: normal;
+   margin-top: 5px;
+   cursor: pointer;
+}
+.siege-inline-checkbox-tight {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+   font-weight: normal;
+   margin: 0;
+   cursor: pointer;
+}
+.siege-bold-checkbox {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   font-weight: bold;
+   cursor: pointer;
+}
+.siege-inline-row {
+   display: flex;
+   gap: 5px;
+   align-items: center;
+}
+.siege-ammo-rewrite-row input[type="text"] {
+   flex: 1;
+   min-width: 0;
+}
+.siege-prof-label {
+   display: flex;
+   flex-direction: column;
+   line-height: normal;
+   justify-content: flex-start;
+}
+.siege-prof-label-text {
+   line-height: var(--form-field-height, 24px);
+}
+.siege-add-link {
+   font-size: 0.85em;
+   font-weight: normal;
+   cursor: pointer;
+   margin-top: 4px;
+   color: var(--color-text-hyperlink);
+}
+.siege-proficiencies-list {
+   flex: 1;
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
+}
+
+.siege-damage-tag {
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   margin-right: 8px;
+   margin-top: 4px;
+   background: rgba(0, 0, 0, 0.1);
+   padding: 2px 6px;
+   border-radius: 4px;
+   border: 1px solid #aaaaaa;
+   color: var(--color-text-dark-primary);
+}
+
+.siege-lift-dialog,
+.siege-delegate-dialog {
+   font-size: 0.9em;
+}
+.siege-cap-note {
+   font-size: 0.85em;
+   color: var(--color-text-dark-5);
+}
+.siege-warn {
+   color: #ff5555;
+   font-weight: bold;
+   margin-top: 5px;
+}
+
+.siege-top-btn {
+   width: 80%;
+   margin: 0 auto;
+   display: block;
+   margin-bottom: 0;
+}
+.siege-top-btn-extra {
+   margin-top: 6px;
+}
+.siege-sep {
+   margin: 10px 0;
+   border: 0;
+   border-top: 1px solid var(--color-border-dark-4);
+}
+.siege-banner {
+   padding: 5px;
+   border-radius: 4px;
+   margin-bottom: 10px;
+   text-align: center;
+   font-weight: bold;
+}
+.siege-banner-error {
+   color: #ff5555;
+   background: rgba(255, 0, 0, 0.1);
+}
+.siege-banner-warn {
+   color: #ffaa00;
+   background: rgba(255, 170, 0, 0.1);
+}
+.siege-info-box {
+   font-size: 0.85em;
+   margin-bottom: 8px;
+   background: rgba(0, 0, 0, 0.2);
+   padding: 8px;
+   border-radius: 4px;
+}
+.siege-no-margin {
+   margin: 0;
+}
+.siege-detail-line {
+   margin: 0 0 4px 0;
+}
+.siege-prereq-item {
+   margin-right: 8px;
+}
+.siege-icon-ok {
+   color: #20c997;
+}
+.siege-icon-bad {
+   color: #ff4444;
+}
+.siege-damage-tags {
+   margin-bottom: 10px;
+}
+
+.vehicle-penalties {
+   margin-top: 8px;
+   font-size: 0.85em;
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-penalty-row {
+   display: flex;
+   gap: 10px;
+}
+.siege-vehicle-penalty-row {
+   align-items: center;
+   flex-wrap: wrap;
+   column-gap: 8px;
+   row-gap: 6px;
+}
+.siege-vehicle-penalty-label {
+   display: inline-flex;
+   align-items: center;
+   gap: 5px;
+   flex: 1 1 220px;
+   min-width: 0;
+}
+.siege-vehicle-penalty-row .siege-inline-label {
+   font-weight: 700;
+   margin-right: 0;
+}
+.siege-vehicle-penalty-row .veh-penalty-select {
+   flex: 0 0 118px;
+   width: 118px;
+   min-width: 104px;
+}
+.siege-actions-app .siege-action-ammo-types {
+   margin: 6px 0;
+}
+.siege-ammo-manage {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-ammo-manage-status {
+   padding: 8px 10px;
+   border: 1px solid rgba(79, 140, 255, 0.36);
+   border-radius: 5px;
+   background: rgba(17, 51, 122, 0.32);
+   color: var(--siege-text);
+   font-weight: 700;
+   text-align: center;
+}
+.siege-ammo-manage-buttons {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+}
+.siege-ammo-manage-buttons .roll-siege-btn {
+   width: 100%;
+   margin-top: 0;
+}
+.siege-ammo-manage-heading {
+   margin-top: 0;
+}
+.siege-ammo-manage-cancel {
+   margin-top: 4px;
+}
+.siege-versatile-row {
+   align-items: center;
+   flex-wrap: wrap;
+}
+
+.siege-req-badge {
+   font-size: 0.8em;
+   padding: 2px 6px;
+   border-radius: 4px;
+   color: white;
+   margin-left: 8px;
+}
+.siege-req-met {
+   background: #20c997;
+}
+.siege-req-unmet {
+   background: #ff4444;
+}
+.siege-mount-header-btn {
+   font-size: 0.8em;
+   line-height: 1.2;
+   padding: 2px 6px;
+   border-radius: 4px;
+   color: #fff3cf;
+   background: rgba(107, 84, 16, 0.96);
+   border: 1px solid var(--siege-command-gold);
+   margin-left: 6px;
+   display: inline-flex;
+   align-items: center;
+   gap: 4px;
+   width: auto;
+   min-height: 0;
+   cursor: pointer;
+}
+.siege-mount-header-btn:hover:not(:disabled) {
+   background: var(--siege-cobalt-bright, #2255cc);
+   border-color: var(--siege-cobalt-glow, #4f8cff);
+   color: #ffffff;
+}
+.siege-mount-header-btn:disabled {
+   opacity: 0.55;
+   cursor: not-allowed;
+}
+.siege-details-body-small {
+   font-size: 0.9em;
+   line-height: 1.4;
+}
+
+.siege-form-group {
+   margin-bottom: 10px;
+}
+.siege-form-group select,
+.siege-form-group input {
+   width: 100%;
+}
+
+.siege-load-tracker {
+   margin-top: -5px;
+}
+.siege-ability-template {
+   margin-top: 5px;
+}
+

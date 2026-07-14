@@ -1,58 +1,172 @@
-import { MODULE_ID, DC_BY_LEVEL } from "../constants.mjs"
+import { MODULE_ID } from "../constants.mjs"
 import {
-   slugify,
-   splitCSV,
-   clampLevel,
    renderHbs,
    tplPath,
-   capitalize,
    tKey,
-   ensureSiegeRoll,
-   makeModifier,
-   getSiegeTokenId,
-   getCostGlyph,
+   findCrewmenOf,
+   findLeaderEffect,
+   formatProficiency,
+   isSiegeLifted,
+   siegeOffensiveEffectRuleUpdates,
 } from "../utils.mjs"
-import { AmmunitionManager } from "../managers/ammunition.mjs"
-import { SiegeSFXManager } from "../managers/sfx.mjs"
 import {
    getActionsForCrew,
-   getAmmoInfo,
-   computePrereqData,
-   computeCornerShot,
-   buildDamageTagsHtml,
-   versatileOptionsFor,
    computeCrewStatus,
-   computeBestModifier,
    ensureSiegeCSS,
-   formatSignedMod,
+   resolveActionDC,
+   levelBasedActionDC,
+   actionDisabledReason,
 } from "./helpers.mjs"
 import { repairMacro } from "./repair.mjs"
+import { repairShieldsMacro } from "./repair-shields.mjs"
 import { delegateWeightMacro } from "./delegate.mjs"
+import { takeLeadershipMacro, delegateLeadershipMacro } from "./leadership.mjs"
+import {
+   resolveCrewman,
+   resolveMountedSiege,
+   buildI18nLabels,
+   buildActionData,
+} from "./action-build.mjs"
+import {
+   readRollContext,
+   buildCustomOptions,
+   calcDistance,
+   validateRange,
+   findMissingPrereqs,
+   deductAmmo,
+   hasSpendableAmmo,
+   applyActionEffects,
+   handleSkillRoll,
+   handleAbilityAttack,
+   handleStrike,
+} from "./action-roll.mjs"
+import { SiegeSFXManager } from "../managers/sfx.mjs"
+import { AmmunitionManager } from "../managers/ammunition.mjs"
 import { SiegeSocketManager } from "../managers/sockets.mjs"
+import { SiegeCrewManager } from "../managers/crew.mjs"
+import { applyConsequences } from "./consequences.mjs"
+import {
+   _ammoStrikeActions,
+   _manageAmmunitionFromLoadAction,
+   _manageWeaponAmmunitionFromActions,
+} from "./action/ammunition-management.mjs"
+
+const escapeHTML = (value) =>
+   foundry.utils.escapeHTML?.(String(value ?? "")) ?? String(value ?? "")
 
 export async function actionMacro(crewmanActor = null) {
-   const crewman = crewmanActor || _resolveCrewman()
+   const crewman = crewmanActor || resolveCrewman()
    if (!crewman) return
 
-   const mountInfo = await _resolveMountedSiege(crewman)
+   const mountInfo = await resolveMountedSiege(crewman)
    if (!mountInfo) return
    const { siege, position } = mountInfo
+
+   const initialState = _buildDialogState(crewman, siege, position)
+   if (initialState.actions.length === 0)
+      return ui.notifications.warn(tKey("Notifications.NoAvailableActions"))
+
+   class SiegeActionsApp extends foundry.applications.api.ApplicationV2 {
+      static DEFAULT_OPTIONS = {
+         classes: ["siege-v2-app", "siege-actions-app"],
+         window: { title: tKey("ActionMacro.AppTitle", { name: siege.name }) },
+         position: { width: 450, height: "auto" },
+      }
+      constructor(options) {
+         super(options)
+         ensureSiegeCSS()
+         this._openDetails = new Set()
+         this._refresh = foundry.utils.debounce(
+            () => this.render({ force: false }),
+            100,
+         )
+         this._hooks = []
+         const on = (hook, fn) => {
+            Hooks.on(hook, fn)
+            this._hooks.push([hook, fn])
+         }
+         const itemChanged = (item) => {
+            const parent = item?.parent
+            if (parent?.id === siege.id || parent?.id === crewman.id)
+               this._refresh()
+         }
+         const actorChanged = (actor) => {
+            if (actor?.id === siege.id || actor?.id === crewman.id)
+               this._refresh()
+         }
+         on("createItem", itemChanged)
+         on("updateItem", itemChanged)
+         on("deleteItem", itemChanged)
+         on("updateActor", actorChanged)
+      }
+      async _renderHTML() {
+         const state = _buildDialogState(crewman, siege, position)
+         for (const row of state.renderData.actions)
+            row.open = this._openDetails.has(row.id)
+         for (const row of state.renderData.strikeActions)
+            row.open = this._openDetails.has(row.id)
+         for (const row of state.renderData.otherActions)
+            row.open = this._openDetails.has(row.id)
+         this._ctx = state.ctx
+         return renderHbs(tplPath("macros/actions.hbs"), state.renderData)
+      }
+      _replaceHTML(result, content) {
+         content.innerHTML = result
+      }
+      _onRender() {
+         _bindAppListeners(this, this._ctx)
+      }
+      _onClose(options) {
+         for (const [hook, fn] of this._hooks || []) Hooks.off(hook, fn)
+         return super._onClose(options)
+      }
+   }
+
+   new SiegeActionsApp().render(true)
+}
+
+function _buildDialogState(crewman, siege, position) {
+   const isEnterableVehicle =
+      siege.type === "vehicle" && !!siege.getFlag(MODULE_ID, "enterable")
+   const vehicleNeedsIgnition = siege.getFlag(MODULE_ID, "needsIgnition") === true
+   const vehicleLaunched = siege.itemTypes.effect.some((e) =>
+      e.getFlag(MODULE_ID, "isLaunched"),
+   )
 
    const { crewBlocked, shorthandedPenalty, missingCrewString, totalMissing } =
       computeCrewStatus(siege)
    const isPortable = (siege.system.traits?.value || []).includes("portable")
+   const actions = getActionsForCrew(siege, position, crewman)
+   const autoDC = levelBasedActionDC(crewman)
 
-   const actions = getActionsForCrew(siege, position)
-   if (actions.length === 0)
-      return ui.notifications.warn(tKey("Notifications.NoAvailableActions"))
+   const macroActionsData = actions.map((a) => {
+      const data = buildActionData(a, siege, crewman, autoDC, isPortable)
+      data.ignitionBlocked =
+         isEnterableVehicle &&
+         vehicleNeedsIgnition &&
+         !vehicleLaunched &&
+         data.needsIgnition
+      return data
+   })
+   const strikeActions = macroActionsData.filter((a) => a.isStrike)
+   const otherActions = macroActionsData.filter((a) => !a.isStrike)
 
-   const crewLevel = clampLevel(crewman.system.details.level?.value)
-   const autoDC =
-      siege.getFlag(MODULE_ID, "disableDC") || DC_BY_LEVEL[crewLevel]
-
-   const macroActionsData = actions.map((a) =>
-      _buildActionData(a, siege, crewman, autoDC, isPortable),
+   const mountedEffect = crewman.itemTypes.effect.find(
+      (e) =>
+         e.getFlag(MODULE_ID, "siegeId") === siege.id &&
+         e.getFlag(MODULE_ID, "position"),
    )
+   const isInside = !!(
+      mountedEffect &&
+      mountedEffect.getFlag(MODULE_ID, "isEntered")
+   )
+   const canUnmount = !!mountedEffect && !isInside && !isEnterableVehicle
+   const leaveVehicleLabel = isInside
+      ? tKey("CrewHUD.Exit")
+      : tKey("CrewHUD.Unmount")
+   const leaveVehicleIcon = isInside
+      ? "fa-right-from-bracket"
+      : "fa-person-walking-arrow-right"
 
    const myLiftedItem = isPortable
       ? crewman.items.find(
@@ -64,8 +178,22 @@ export async function actionMacro(crewmanActor = null) {
    const myLiftBulk = myLiftedItem?.system?.bulk?.value || 0
    const isLifting = isPortable && myLiftBulk > 0
 
-   const htmlContent = await renderHbs(tplPath("macros/actions.hbs"), {
+   const hasOtherCrew = findCrewmenOf(siege).some((a) => a.id !== crewman.id)
+   const isLifted = isSiegeLifted(siege)
+   const leaderEffect = findLeaderEffect(siege)
+   const iAmLeader = leaderEffect?.parent?.id === crewman.id
+
+   const renderData = {
       actions: macroActionsData,
+      strikeActions,
+      otherActions,
+      hasStrikes: strikeActions.length > 0,
+      hasOtherActions: otherActions.length > 0,
+      isInside,
+      showLeaveVehicle: isInside || canUnmount,
+      leaveVehicleType: isInside ? "exit-vehicle" : "unmount-vehicle",
+      leaveVehicleLabel,
+      leaveVehicleIcon,
       siegeName: siege.name,
       repairDC: autoDC,
       crewBlocked,
@@ -75,255 +203,279 @@ export async function actionMacro(crewmanActor = null) {
       isPortable,
       isLifting,
       myLiftBulk,
-      i18n: _buildI18nLabels(),
-   })
-
-   class SiegeActionsApp extends foundry.applications.api.ApplicationV2 {
-      static DEFAULT_OPTIONS = {
-         window: { title: tKey("ActionMacro.AppTitle", { name: siege.name }) },
-         position: { width: 450, height: "auto" },
-      }
-      constructor(options) {
-         super(options)
-         ensureSiegeCSS()
-      }
-      _renderHTML() {
-         return htmlContent
-      }
-      _replaceHTML(result, content) {
-         content.innerHTML = result
-      }
-      _onRender() {
-         _bindAppListeners(this, {
-            crewman,
-            siege,
-            isPortable,
-            crewBlocked,
-            shorthandedPenalty,
-            autoDC,
-         })
-      }
+      showDelegateWeight: isLifting && hasOtherCrew,
+      showTakeLeadership: isLifting && isLifted && !leaderEffect,
+      showDelegateLeadership: isPortable && isLifted && iAmLeader && hasOtherCrew,
+      i18n: buildI18nLabels(),
    }
 
-   new SiegeActionsApp().render(true)
-}
-
-function _resolveCrewman() {
-   const controlled = canvas.tokens.controlled
-   if (controlled.length !== 1) {
-      ui.notifications.warn(tKey("Notifications.SelectExactlyOneCrewman"))
-      return null
-   }
-   return controlled[0].actor
-}
-
-async function _resolveMountedSiege(crewman) {
-   const effects = crewman.itemTypes.effect.filter((e) =>
-      e.getFlag(MODULE_ID, "siegeId"),
-   )
-   if (effects.length === 0) {
-      ui.notifications.warn(tKey("Notifications.NotMountedOnSiege"))
-      return null
-   }
-
-   const effect = effects[0]
-   const siegeUuid = effect.getFlag(MODULE_ID, "siegeUuid")
-   const siegeId = effect.getFlag(MODULE_ID, "siegeId")
-   const position = effect.getFlag(MODULE_ID, "position")
-
-   let siege = null
-   if (siegeUuid) siege = await fromUuid(siegeUuid)
-   if (!siege && siegeId) siege = game.actors.get(siegeId)
-   if (!siege) {
-      ui.notifications.warn(tKey("Notifications.SiegeWeaponNotFound"))
-      return null
-   }
-   return { siege, position }
-}
-
-function _buildI18nLabels() {
-   return {
-      noCrew: tKey("ActionMacro.NoCrewToPerform"),
-      shorthandedActive: tKey("ActionMacro.ShorthandedActive"),
-      penaltyApplied: tKey("ActionMacro.PenaltyApplied"),
-      repair: tKey("ActionMacro.Repair"),
-      delegateWeight: tKey("ActionMacro.DelegateWeight"),
-      currentlyLifting: tKey("ActionMacro.CurrentlyLifting"),
-      ammunition: tKey("ActionMacro.Ammunition"),
-      area: tKey("ActionMacro.Area"),
-      saveDC: tKey("ActionMacro.SaveDC"),
-      damage: tKey("ActionMacro.Damage"),
-      range: tKey("ActionMacro.Range"),
-      cornerShot: tKey("ActionMacro.CornerShot"),
-      lethalAttack: tKey("ActionMacro.LethalAttack"),
-      highestStrInCrew: tKey("ActionMacro.HighestStrInCrew"),
-      vehiclePenalties: tKey("ActionMacro.VehiclePenalties"),
-      penalty2: tKey("ActionMacro.Penalty2"),
-      penalty4: tKey("ActionMacro.Penalty4"),
-      traits: tKey("ActionMacro.Traits"),
-      prerequisites: tKey("ActionMacro.Prerequisites"),
-   }
-}
-
-function _buildActionData(a, siege, crewman, autoDC, isPortable) {
-   const flag = { skills: [], ...(a.getFlag(MODULE_ID, "siegeAction") || {}) }
-   const prereqData = computePrereqData(siege, flag)
-   const {
-      name: ammoName,
-      loaded: ammoLoaded,
-      max: ammoMax,
-   } = getAmmoInfo(siege, flag)
-   const cornerShot = computeCornerShot(crewman, flag)
-
-   const rawTraits = splitCSV(flag.traits).map((t) => t.toLowerCase())
-   const hasNonlethal = rawTraits.includes("nonlethal")
-   const versatileOptions = versatileOptionsFor(flag)
-   const damageHtml = buildDamageTagsHtml(flag.damageParts)
-
-   const buttons = _buildActionButtons(a, crewman, flag, autoDC)
-
-   return {
-      id: a.id,
-      name: a.name,
-      img: a.img,
-      description: a.system.description.value,
-      costGlyph: getCostGlyph(a),
-      buttons,
-      isStrike: flag.isStrike || flag.isAttack,
-      isAbility: flag.isAttack && !flag.isStrike,
-      isRanged: flag.isRanged !== false,
-      hasNonlethal,
-      versatileOptions,
-      damageHtml,
-      prereqData,
-      ammoName,
-      ammoLoaded,
-      ammoMax,
-      spend: parseInt(flag.spend) || 1,
-      traitsStr: flag.traits || tKey("Misc.None"),
-      saveDC: flag.saveDC || 10,
-      areaSize: flag.areaSize || 5,
-      areaType: flag.areaType || "burst",
-      blindRange: flag.blindRange || tKey("Misc.Infinity"),
-      minRange: flag.minRange || "0",
-      maxRange: flag.maxRange || tKey("Misc.Infinity"),
-      cornerShot,
-      showStrCheckbox: isPortable && flag.isStrike,
+   const ctx = {
+      crewman,
+      siege,
+      position,
       isPortable,
+      isEnterableVehicle,
+      vehicleNeedsIgnition,
+      crewBlocked,
+      shorthandedPenalty,
+      autoDC,
    }
-}
 
-function _buildActionButtons(a, crewman, flag, autoDC) {
-   if (flag.isStrike) {
-      const generatedStrike = crewman.system.actions?.find(
-         (act) => act.type === "strike" && act.label === a.name,
-      )
-      const startMod = generatedStrike ? generatedStrike.totalModifier : 0
-      const { bestMod } = computeBestModifier(crewman, flag, startMod)
-      return [
-         {
-            type: "strike",
-            label: tKey("ActionMacro.LaunchAttack", {
-               mod: formatSignedMod(bestMod),
-            }),
-         },
-      ]
-   }
-   if (flag.isAttack) {
-      return [{ type: "ability-attack", label: tKey("ActionMacro.UseAbility") }]
-   }
-   if (flag.skills.length > 0) {
-      return flag.skills.map((s, idx) => {
-         let skillMod = 0
-         let displayName = s.name.toUpperCase()
-
-         if (s.name === "lore") {
-            const loreSkill = Object.values(crewman.skills).find(
-               (sk) => sk.slug === s.loreName,
-            )
-            skillMod = loreSkill ? loreSkill.mod : 0
-            const clean = s.loreName.replace(/-lore$/i, "").replace(/-/g, " ")
-            displayName = tKey("Skills.LoreSuffix", {
-               name: clean.toUpperCase(),
-            })
-         } else if (s.name === "perception") {
-            skillMod = crewman.perception?.mod || 0
-         } else {
-            skillMod = crewman.skills[s.name]?.mod || 0
-         }
-
-         const targetDC = s.dc === "" || s.dc === null ? autoDC : s.dc
-         return {
-            type: "skill",
-            idx,
-            hasIdx: true,
-            label: tKey("ActionMacro.SkillBtn", {
-               name: displayName,
-               mod: formatSignedMod(skillMod),
-               dc: targetDC,
-            }),
-         }
-      })
-   }
-   return [{ type: "none", label: tKey("ActionMacro.PerformAction") }]
+   return { actions, renderData, ctx }
 }
 
 function _bindAppListeners(app, ctx) {
-   const root = $(app.element)
+   const root = app.element
+   if (!root) return
 
-   root.find(".veh-penalty-2").on("change", (e) => {
-      if (e.target.checked)
-         $(e.currentTarget)
-            .closest(".vehicle-penalties")
-            .find(".veh-penalty-4")
-            .prop("checked", false)
-   })
-   root.find(".veh-penalty-4").on("change", (e) => {
-      if (e.target.checked)
-         $(e.currentTarget)
-            .closest(".vehicle-penalties")
-            .find(".veh-penalty-2")
-            .prop("checked", false)
-   })
+   root.querySelectorAll("details[data-action-id]").forEach((details) =>
+      details.addEventListener("toggle", (e) => {
+         const id = e.currentTarget?.dataset?.actionId
+         if (!id || !app._openDetails) return
+         if (e.currentTarget.open) app._openDetails.add(id)
+         else app._openDetails.delete(id)
+      }),
+   )
 
-   root
-      .find(".roll-siege-btn")
-      .on("click", (e) => _handleRollClick(e, app, ctx))
+   root.querySelectorAll(".roll-siege-btn").forEach((button) =>
+      button.addEventListener("click", (e) => _handleRollClick(e, app, ctx)),
+   )
 }
 
 async function _handleRollClick(e, app, ctx) {
    e.preventDefault()
-   const btn = $(e.currentTarget)
-   const btnType = btn.data("type")
-   const {
-      crewman,
-      siege,
-      isPortable,
-      crewBlocked,
-      shorthandedPenalty,
-      autoDC,
-   } = ctx
+   const btn = e.currentTarget
+   if (!btn || btn.dataset.siegeBusy === "true") return false
+   btn.dataset.siegeBusy = "true"
+   btn.disabled = true
+   try {
+      const btnType = btn.dataset.type
+      const {
+         crewman,
+         siege,
+         isPortable,
+         isEnterableVehicle,
+         vehicleNeedsIgnition,
+         crewBlocked,
+         shorthandedPenalty,
+         autoDC,
+      } = ctx
 
-   if (btnType === "repair") {
-      repairMacro(crewman, siege)
-      return app.close()
+      if (btnType === "repair") {
+         const result = await repairMacro(crewman, siege)
+         if (result !== false) return app.close()
+         app.render?.({ force: false })
+         return
+      }
+      if (btnType === "repair-shields") {
+         const result = await repairShieldsMacro(crewman, siege)
+         if (result !== false) return app.close()
+         app.render?.({ force: false })
+         return
+      }
+      if (btnType === "delegate-weight") {
+         await delegateWeightMacro(crewman, siege)
+         return app.close()
+      }
+      if (btnType === "take-leadership") {
+         await takeLeadershipMacro(crewman, siege)
+         return app.close()
+      }
+      if (btnType === "delegate-leadership") {
+         await delegateLeadershipMacro(crewman, siege)
+         return app.close()
+      }
+      if (btnType === "exit-vehicle") {
+         const { VehicleEntryManager } = await import("../managers/entry.mjs")
+         await VehicleEntryManager.exitVehicle(crewman, siege)
+         return app.close()
+      }
+      if (btnType === "unmount-vehicle") {
+         const removed = await SiegeCrewManager.dismountCrewman(crewman, siege)
+         if (removed)
+            ui.notifications.info(
+               tKey("Notifications.CrewmanDismounted", {
+                  crewman: crewman.name,
+                  siege: siege.name,
+               }),
+            )
+         return app.close()
+      }
+
+      const actionItem = siege.items.get(btn.dataset.item)
+      if (!actionItem) return
+      const disabledReason = actionDisabledReason(actionItem)
+      if (disabledReason) {
+         ui.notifications.warn(disabledReason)
+         return
+      }
+      if (btnType === "linked-action") {
+         await executeActionItem({
+            event: e,
+            app,
+            crewman,
+            siege,
+            actionItem,
+            buttonType: null,
+            detailsBody: null,
+            ctx,
+         })
+         app.render?.({ force: false })
+         return
+      }
+      if (btnType === "weapon-manage-ammo") {
+         await _manageWeaponAmmunitionFromActions(siege, crewman, actionItem)
+         app.render?.({ force: false })
+         return
+      }
+      if (btnType === "load-reload") {
+         return executeActionItem({
+            event: e,
+            app,
+            crewman,
+            siege,
+            actionItem,
+            buttonType: null,
+            detailsBody: btn.closest(".details-body"),
+            ctx,
+         })
+      }
+      return executeActionItem({
+         event: e,
+         app,
+         crewman,
+         siege,
+         actionItem,
+         buttonType: btnType,
+         skillIdx: btn.dataset.skillidx,
+         detailsBody: btn.closest(".details-body"),
+         ctx,
+      })
+   } finally {
+      delete btn.dataset.siegeBusy
+      btn.disabled = false
    }
-   if (btnType === "delegate-weight") {
-      await delegateWeightMacro(crewman, siege)
-      return app.close()
+}
+export async function executeActionItem({
+   event = null,
+   app = null,
+   crewman,
+   siege,
+   actionItem,
+   buttonType = null,
+   skillIdx = null,
+   detailsBody = null,
+   preselectedLoadStrikeId = null,
+   ctx = null,
+} = {}) {
+   if (!crewman || !siege || !actionItem) return false
+
+   const disabledReason = actionDisabledReason(actionItem)
+   if (disabledReason) {
+      ui.notifications.warn(disabledReason)
+      return false
    }
-   if (crewBlocked) {
-      return ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+
+   const position = ctx?.position || _positionForCrewman(crewman, siege)
+   const state = ctx || _buildDialogState(crewman, siege, position)
+   const appShim =
+      app || {
+         close() {},
+         render() {},
+      }
+
+   const rawFlag = actionItem.getFlag(MODULE_ID, "siegeAction") || {}
+   if (rawFlag.isLightActivate) {
+      if (state.crewBlocked) {
+         ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+         return false
+      }
+      const { VehicleLightManager } = await import("../managers/lights.mjs")
+      const activated = await VehicleLightManager.activateLight(
+         siege,
+         actionItem,
+         crewman,
+      )
+      if (!activated) return false
+      SiegeSFXManager.play(
+         siege,
+         activated.enabled === false
+            ? `action-${actionItem.id}-off`
+            : `action-${actionItem.id}`,
+      )
+      appShim.close?.()
+      return true
+   }
+   if (rawFlag.isShieldActivate) {
+      if (state.crewBlocked) {
+         ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+         return false
+      }
+      const { VehicleShieldManager } = await import("../managers/shields.mjs")
+      const activated = await VehicleShieldManager.activateShield(
+         siege,
+         actionItem,
+         crewman,
+      )
+      if (activated) appShim.close?.()
+      return activated
+   }
+   if (rawFlag.isRepairShields) {
+      if (state.crewBlocked) {
+         ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+         return false
+      }
+      const result = await repairShieldsMacro(crewman, siege)
+      if (result !== false) appShim.close?.()
+      return result !== false
+   }
+   if (rawFlag.isRepair || _isRepairAction(actionItem)) {
+      if (state.crewBlocked) {
+         ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+         return false
+      }
+      const result = await repairMacro(crewman, siege)
+      if (result !== false) appShim.close?.()
+      return result !== false
+   }
+   const isAmmoAttack =
+      (rawFlag.isAttack || rawFlag.isStrike) &&
+      rawFlag.usesAmmunition !== false
+   const ammoPayload = isAmmoAttack
+      ? AmmunitionManager.activeAmmoPayload(siege, actionItem)
+      : null
+   const flag = isAmmoAttack
+      ? AmmunitionManager.applyAmmoOverridesToFlag(rawFlag, ammoPayload)
+      : rawFlag
+   const body = detailsBody || document.createElement("div")
+   const eventObj = event?.originalEvent
+      ? event
+      : {
+           originalEvent: event || new MouseEvent("click"),
+           preventDefault() {},
+           stopPropagation() {},
+        }
+   let btnType = buttonType
+
+if (
+      state.isEnterableVehicle &&
+      state.vehicleNeedsIgnition &&
+      flag.needsIgnition !== false
+   ) {
+      const { VehicleLaunchManager } = await import("../managers/launch.mjs")
+      if (!VehicleLaunchManager.isLaunched(siege)) {
+         ui.notifications.warn(tKey("CrewHUD.NotLaunched"))
+         return false
+      }
    }
 
-   const actionItem = siege.items.get(btn.data("item"))
-   if (!actionItem) return
+   if (state.crewBlocked) {
+      ui.notifications.warn(tKey("Notifications.NotEnoughCrew"))
+      return false
+   }
 
-   const flag = actionItem.getFlag(MODULE_ID, "siegeAction") || {}
-   const detailsBody = btn.closest(".details-body")
-
-   const rollContext = _readRollContext(detailsBody, flag)
-   const customOptions = _buildCustomOptions(
+   const rollContext = readRollContext(body, flag)
+   const customOptions = buildCustomOptions(
       siege,
       flag,
       rollContext.versatileTrait,
@@ -332,44 +484,124 @@ async function _handleRollClick(e, app, ctx) {
    const isLoading =
       actionItem.name === tKey("ActionTemplates.Load.Name") ||
       actionItem.name === "Loading"
+   if (!btnType) btnType = _defaultButtonType(actionItem, flag, isLoading)
    const isStrike = btnType === "strike"
+   const skillGatesAbility =
+      btnType === "skill" && flag.isAttack && !flag.isStrike
 
-   const distance = _calcDistance(siege, isStrike)
-   if (isStrike && !_validateRange(distance, flag)) return
+   const distance = calcDistance(siege, isStrike)
+   if (isStrike && !validateRange(distance, flag)) return
 
-   const missingPrereqs = _findMissingPrereqs(siege, flag)
+   const missingPrereqs = findMissingPrereqs(siege, flag)
    if (missingPrereqs.length > 0) {
-      return ui.notifications.warn(
+      ui.notifications.warn(
          tKey("Notifications.MissingPrereqs", {
             name: actionItem.name,
             list: missingPrereqs.map((p) => p.name).join(", "),
          }),
       )
+      return false
    }
 
-   if ((flag.isAttack || flag.isStrike) && flag.usesAmmunition !== false) {
-      if (!(await _deductAmmo(siege, flag))) return
+   if (
+      (flag.isAttack || flag.isStrike) &&
+      flag.usesAmmunition !== false &&
+      !hasSpendableAmmo(siege, flag, actionItem)
+   )
+      return false
+
+   if (flag.isAttack || flag.isStrike)
+      await _normalizeSiegeOffensiveEffectRules(siege)
+
+   if (
+      (flag.isAttack || flag.isStrike) &&
+      flag.usesAmmunition !== false &&
+      !skillGatesAbility &&
+      !isStrike
+   ) {
+      if (!(await deductAmmo(siege, flag, actionItem))) return
    }
 
-   const applyEffects = () => _applyEffects(siege, actionItem, flag)
+   const applyEffects = () => applyActionEffects(siege, actionItem, flag)
+   let usedSkillRoll = false
+   let skillRollOutcome = null
 
    if (btnType === "skill") {
-      const skillResult = await _handleSkillRoll(
-         e,
-         btn,
+      usedSkillRoll = true
+      const resolvedSkillIdx =
+         skillIdx ?? (await _promptSkillIndex(crewman, flag, state.autoDC))
+      if (resolvedSkillIdx === null) return false
+      const skillResult = await handleSkillRoll(
+         eventObj,
+         resolvedSkillIdx,
          actionItem,
          crewman,
          siege,
          flag,
          {
-            autoDC,
+            autoDC: state.autoDC,
             customOptions,
-            shorthandedPenalty,
-            applyEffects,
-            app,
+            shorthandedPenalty: state.shorthandedPenalty,
+            applyEffects:
+               isLoading || skillGatesAbility ? async () => {} : applyEffects,
+            app: appShim,
+            deferSuccessConsequences: isLoading || skillGatesAbility,
+            onOutcome: (outcome) => {
+               skillRollOutcome = outcome
+            },
          },
       )
       if (!skillResult) return
+      if (skillGatesAbility) {
+         if (flag.usesAmmunition !== false) {
+            if (!(await deductAmmo(siege, flag, actionItem))) return
+         }
+         btnType = "ability-attack"
+      }
+   }
+
+   if (isLoading) {
+      const preselectedAction = preselectedLoadStrikeId
+         ? siege.items.get(preselectedLoadStrikeId)
+         : null
+      const success = preselectedAction
+         ? await _manageWeaponAmmunitionFromActions(
+              siege,
+              crewman,
+              preselectedAction,
+           )
+         : await _manageAmmunitionFromLoadAction(siege, crewman)
+      if (!success) return
+
+      await ChatMessage.create({
+         speaker: ChatMessage.getSpeaker({ actor: crewman }),
+         content: tKey("Chat.PerformedAction", {
+            crewman: crewman.name,
+            action: actionItem.name,
+            siege: siege.name,
+         }),
+      })
+      if (!usedSkillRoll)
+         await applyConsequences({
+            actionItem,
+            flag,
+            outcome: "no-roll",
+            crewman,
+            siege,
+         })
+      else
+         await applyConsequences({
+            actionItem,
+            flag,
+            outcome: skillRollOutcome || "success",
+            crewman,
+            siege,
+         })
+
+SiegeSFXManager.play(siege, `action-${actionItem.id}`)
+
+appShim.render?.({ force: false })
+      return true
    }
 
    if (btnType === "none") {
@@ -382,918 +614,148 @@ async function _handleRollClick(e, app, ctx) {
          }),
       })
       await applyEffects()
-      SiegeSFXManager.play(siege, `action-${actionItem.id}`)
-   }
-
-   if (isLoading) {
-      await _handleLoadingFlow(actionItem, siege, crewman, flag)
-      return app.close()
-   }
-
-   if (btnType === "ability-attack") {
-      await _handleAbilityAttack(
+      await applyConsequences({
          actionItem,
-         siege,
          flag,
-         detailsBody,
-         applyEffects,
-      )
-      return app.close()
-   }
-
-   if (isStrike) {
-      await _handleStrike(e, actionItem, siege, crewman, flag, {
-         customOptions,
-         rollContext,
-         shorthandedPenalty,
-         distance,
-         isPortable,
-         detailsBody,
-         applyEffects,
-         app,
+         outcome: "no-roll",
+         crewman,
+         siege,
       })
-      return
-   }
+      SiegeSFXManager.play(siege, `action-${actionItem.id}`)
 
-   app.close()
-}
-
-function _readRollContext(detailsBody, flag) {
-   const rawTraits = splitCSV(flag.traits).map((t) => t.toLowerCase())
-   const baseHasNonlethal = rawTraits.includes("nonlethal")
-
-   const nonlethalCb = detailsBody.find(".siege-nonlethal-cb")
-   const isNonlethalChecked = nonlethalCb.length
-      ? nonlethalCb.is(":checked")
-      : baseHasNonlethal
-
-   const versatileRadio = detailsBody.find(".siege-versatile-radio:checked")
-   const versatileTrait =
-      versatileRadio.length && versatileRadio.val() !== "base"
-         ? versatileRadio.val()
-         : null
-   const versatileType =
-      versatileRadio.length && versatileRadio.val() !== "base"
-         ? versatileRadio.data("type")
-         : null
-
-   return {
-      baseHasNonlethal,
-      isNonlethalChecked,
-      versatileTrait,
-      versatileType,
-   }
-}
-
-function _buildCustomOptions(siege, flag, versatileTrait) {
-   const options = splitCSV(flag.rollOptions)
-   options.push(...ensureSiegeRoll(siege))
-   splitCSV(flag.traits).forEach((t) => options.push(`trait:${t}`))
-   if (versatileTrait) options.push(versatileTrait)
-   return options
-}
-
-function _calcDistance(siege, isStrike) {
-   if (!isStrike) return null
-   const targets = Array.from(game.user.targets)
-   if (targets.length === 0) return null
-   const siegeToken = siege.getActiveTokens()[0]
-   const targetToken = targets[0]
-   if (!siegeToken || !targetToken) return null
-   return siegeToken.distanceTo(targetToken)
-}
-
-function _validateRange(distance, flag) {
-   if (flag.isRanged === false || distance === null) return true
-   const blindRange = parseInt(flag.blindRange) || 0
-   const maxRange = parseInt(flag.maxRange) || Infinity
-
-   if (blindRange > 0 && distance <= blindRange) {
-      ui.notifications.warn(
-         tKey("Notifications.TooCloseBlindRange", { range: blindRange }),
-      )
-      return false
-   }
-   if (distance > maxRange) {
-      ui.notifications.warn(
-         tKey("Notifications.TooFarMaxRange", { range: maxRange }),
-      )
-      return false
-   }
-   return true
-}
-
-function _findMissingPrereqs(siege, flag) {
-   const prereqs = flag.prerequisites || []
-   return prereqs.filter((p) => {
-      if (p.name === "Lifted") {
-         return !siege.itemTypes.effect.some(
-            (e) =>
-               e.name === tKey("Markers.Lifted") &&
-               e.getFlag(MODULE_ID, "isPortableMarker"),
-         )
-      }
-      const usedName = tKey("Markers.ActionUsedSuffix", { name: p.name })
-      const ef = siege.itemTypes.effect.find((ef) => ef.name === usedName)
-      return !ef || (ef.system.badge?.value || 1) < p.count
-   })
-}
-
-async function _deductAmmo(siege, flag) {
-   const spendAmount = parseInt(flag.spend) || 1
-   if (!flag.ammoSlug) return true
-
-   const targetSlug = slugify(flag.ammoSlug)
-   const ammoItem = siege.items.find(
-      (i) => slugify(i.system?.slug || i.name) === targetSlug,
-   )
-   if (!ammoItem) {
-      ui.notifications.warn(
-         tKey("Notifications.MissingRequiredAmmo", { name: flag.ammoSlug }),
-      )
-      return false
-   }
-
-   const maxUses = ammoItem.system.charges?.max || 0
-   const currentUses = ammoItem.system.charges?.value || 0
-   const qty = ammoItem.system.quantity || 1
-   const totalAvailable = maxUses > 0 ? (qty - 1) * maxUses + currentUses : qty
-
-   if (totalAvailable < spendAmount) {
-      ui.notifications.warn(tKey("Notifications.InsufficientAmmo"))
-      return false
-   }
-
-   const newTotal = totalAvailable - spendAmount
-   if (newTotal <= 0) {
-      await SiegeSocketManager.modifySiegeItem(siege.uuid, "delete", [
-         ammoItem.id,
-      ])
+      appShim.render?.({ force: false })
       return true
    }
 
-   if (maxUses > 0) {
-      const newQty = Math.ceil(newTotal / maxUses)
-      const newUses = newTotal % maxUses === 0 ? maxUses : newTotal % maxUses
-      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
-         {
-            _id: ammoItem.id,
-            "system.quantity": newQty,
-            "system.charges.value": newUses,
-         },
-      ])
-   } else {
-      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
-         { _id: ammoItem.id, "system.quantity": newTotal },
-      ])
-   }
-   return true
-}
-
-async function _applyEffects(siege, actionItem, flag) {
-   const prereqs = flag.prerequisites || []
-   const prereqNames = new Set(prereqs.map((p) => p.name))
-
-   if (flag.removePrereqsOnUse !== false) {
-      const usedSuffix = tKey("Markers.ActionUsedSuffix", {
-         name: "@@@",
-      }).replace("@@@", "")
-      const toDelete = siege.itemTypes.effect.filter((ef) => {
-         if (ef.name.startsWith(tKey("Markers.LoadedPrefix", { name: "" })))
-            return false
-         const base = ef.name.includes(usedSuffix)
-            ? ef.name.replace(usedSuffix, "")
-            : ef.name
-         return prereqNames.has(base) || prereqNames.has(ef.name)
-      })
-      if (toDelete.length > 0) {
-         await SiegeSocketManager.modifySiegeItem(
-            siege.uuid,
-            "delete",
-            toDelete.map((ef) => ef.id),
-         )
-      }
-   }
-
-   const loadName = tKey("ActionTemplates.Load.Name")
-   const isRequired =
-      actionItem.name === loadName ||
-      actionItem.name === "Loading" ||
-      siege.items.some(
-         (i) =>
-            i.type === "action" &&
-            (i.getFlag(MODULE_ID, "siegeAction")?.prerequisites || []).some(
-               (p) => p.name === actionItem.name,
-            ),
-      )
-   if (!isRequired) return
-
-   const effectName = tKey("Markers.ActionUsedSuffix", {
-      name: actionItem.name,
-   })
-   const existing = siege.itemTypes.effect.find((ef) => ef.name === effectName)
-
-   if (existing) {
-      await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", [
-         {
-            _id: existing.id,
-            "system.badge.value": (existing.system.badge?.value || 1) + 1,
-         },
-      ])
-      return
-   }
-
-   const durationObj = flag.unlimitedDuration
-      ? { value: "unlimited", unit: "unlimited", expiry: null }
-      : {
-           value: flag.effectDuration || 1,
-           unit: "rounds",
-           expiry: flag.effectExpiry || "turn-start",
-        }
-
-   await SiegeSocketManager.modifySiegeItem(siege.uuid, "create", [
-      {
-         name: effectName,
-         type: "effect",
-         img: actionItem.img,
-         system: {
-            level: { value: 1 },
-            duration: durationObj,
-            badge: { type: "counter", value: 1 },
-            description: {
-               value: tKey("Markers.ActionUsedDesc", { name: actionItem.name }),
-            },
-            tokenIcon: { show: true },
-         },
-         flags: { [MODULE_ID]: { isSiegeMarker: true } },
-      },
-   ])
-}
-
-async function _handleSkillRoll(e, btn, actionItem, crewman, siege, flag, ctx) {
-   const { autoDC, customOptions, shorthandedPenalty, applyEffects, app } = ctx
-   const sData = flag.skills[btn.data("skillidx")]
-   const targetDC = sData.dc === "" || sData.dc === null ? autoDC : sData.dc
-
-   const rollModifiers = []
-   if (shorthandedPenalty < 0) {
-      const m = makeModifier(
-         "shorthanded-penalty",
-         tKey("Modifiers.Shorthanded"),
-         shorthandedPenalty,
-         "circumstance",
-      )
-      if (m) rollModifiers.push(m)
-   }
-
-   let rollOutcome = "success"
-   let rollCompleted = false
-
-   const rollArgs = {
-      event: e.originalEvent ?? e,
-      extraRollOptions: customOptions,
-      modifiers: rollModifiers,
-      dc: { value: targetDC },
-      callback: (_roll, outcome) => {
-         rollOutcome = outcome
-         rollCompleted = true
-      },
-   }
-
-   if (sData.name === "lore") {
-      const loreSkill = Object.values(crewman.skills).find(
-         (sk) => sk.slug === sData.loreName,
-      )
-      if (!loreSkill) {
-         ui.notifications.warn(
-            tKey("Notifications.LoreNotFound", { name: sData.loreName }),
-         )
-         app.close()
-         return false
-      }
-      await loreSkill.roll(rollArgs)
-   } else if (sData.name === "perception" && crewman.perception) {
-      await crewman.perception.roll(rollArgs)
-   } else if (crewman.skills[sData.name]) {
-      await crewman.skills[sData.name].roll(rollArgs)
-   } else {
-      ui.notifications.warn(
-         tKey("Notifications.SkillNotFound", { name: sData.name }),
-      )
-      app.close()
-      return false
-   }
-
-   if (!rollCompleted) {
-      app.close()
-      return false
-   }
-   if (rollOutcome === "failure" || rollOutcome === "criticalFailure") {
-      ui.notifications.warn(
-         tKey("Notifications.ActionFailed", { name: actionItem.name }),
-      )
-      await ChatMessage.create({
-         speaker: ChatMessage.getSpeaker({ actor: crewman }),
-         content: tKey("Chat.ActionFailed", {
-            crewman: crewman.name,
-            action: actionItem.name,
-            siege: siege.name,
-         }),
-      })
-      app.close()
-      return false
-   }
-
-   await applyEffects()
-   return true
-}
-
-async function _handleLoadingFlow(actionItem, siege, crewman, flag) {
-   const targetThreshold = flag.loadThreshold || 1
-   const usedName = tKey("Markers.ActionUsedSuffix", { name: actionItem.name })
-   const loadEf = siege.itemTypes.effect.find((ef) => ef.name === usedName)
-   const currentLoadCount = loadEf ? loadEf.system.badge?.value || 1 : 0
-
-   if (currentLoadCount < targetThreshold) {
-      return ui.notifications.info(
-         tKey("Load.ProgressInfo", {
-            name: actionItem.name,
-            current: currentLoadCount,
-            target: targetThreshold,
-         }),
-      )
-   }
-
-   const ammoTypes = siege.getFlag(MODULE_ID, "ammunitionTypes") || []
-   if (ammoTypes.length === 0)
-      return ui.notifications.warn(tKey("Notifications.NoAmmoTypesDefined"))
-
-   const optionsList = ammoTypes
-      .map((t) => {
-         const tSlug = slugify(t.slug || t.name)
-         const currentQty = AmmunitionManager.getCurrentAmmoCount(siege, tSlug)
-         const max =
-            t.max === "" || t.max == null ? tKey("Misc.Infinity") : t.max
-         return `<option value="${tSlug}" data-loaded="${currentQty}" data-max="${max}">${t.name}</option>`
-      })
-      .join("")
-
-   const dialogContent = `
-      <div class="form-group">
-         <label>${tKey("Load.Ammunition")}</label>
-         <select id="load-ammo-slug">${optionsList}</select>
-      </div>
-      <div class="form-group">
-         <label>${tKey("Load.Amount")}</label>
-         <input type="number" id="load-ammo-qty" value="1" min="1">
-      </div>
-      <p id="load-ammo-tracker" class="notes siege-load-tracker">${tKey(
-         "Load.Tracker",
-         { current: 0, max: tKey("Misc.Infinity") },
-      )}</p>`
-
-   const choice = await foundry.applications.api.DialogV2.wait({
-      window: { title: tKey("Load.DialogTitle", { name: siege.name }) },
-      position: { width: 450 },
-      content: dialogContent,
-      buttons: [
-         {
-            action: "load",
-            label: tKey("Load.LoadButton"),
-            icon: "fa-solid fa-truck-loading",
-            callback: () => ({
-               slug: document.getElementById("load-ammo-slug").value,
-               qty:
-                  parseInt(document.getElementById("load-ammo-qty").value) || 1,
-            }),
-         },
-      ],
-      render: _bindLoadDialog,
-   })
-
-   if (!choice) return
-   await _performLoad(choice, siege, crewman, actionItem, flag, ammoTypes)
-}
-
-function _bindLoadDialog() {
-   const select = document.getElementById("load-ammo-slug")
-   const tracker = document.getElementById("load-ammo-tracker")
-   if (!select || !tracker) return
-   const updateTracker = () => {
-      const opt = select.options[select.selectedIndex]
-      if (opt)
-         tracker.innerText = tKey("Load.Tracker", {
-            current: opt.dataset.loaded,
-            max: opt.dataset.max,
-         })
-   }
-   select.addEventListener("change", updateTracker)
-   updateTracker()
-}
-
-async function _performLoad(
-   choice,
-   siege,
-   crewman,
-   actionItem,
-   flag,
-   ammoTypes,
-) {
-   const tInfo = ammoTypes.find(
-      (t) => slugify(t.slug || t.name) === choice.slug,
-   )
-   const maxCap =
-      tInfo.max === "" || tInfo.max == null ? Infinity : parseInt(tInfo.max)
-   const currentQty = AmmunitionManager.getCurrentAmmoCount(siege, choice.slug)
-   const availableSpace = maxCap - currentQty
-
-   if (availableSpace <= 0) {
-      return ui.notifications.warn(
-         tKey("Notifications.MaxCapacityReachedGeneric"),
-      )
-   }
-
-   const requestedQty = parseInt(choice.qty) || 1
-   const actualLoadQty = Math.min(requestedQty, availableSpace)
-   let ammoProcured = 0
-   const extracts = []
-
-   if (flag.takeAmmoFromAdjacent) {
-      const siegeToken = siege.getActiveTokens()[0]
-      if (!siegeToken) {
-         return ui.notifications.warn(tKey("Notifications.SiegeTokenNotFound"))
-      }
-
-      const validTypes = ["loot", "npc", "vehicle", "character"]
-      const adjacentTokens = canvas.tokens.placeables
-         .filter(
-            (t) =>
-               t.actor &&
-               validTypes.includes(t.actor.type) &&
-               siegeToken.distanceTo(t) <= 5 &&
-               t.id !== siegeToken.id,
-         )
-         .sort(
-            (a, b) =>
-               validTypes.indexOf(a.actor.type) -
-               validTypes.indexOf(b.actor.type),
-         )
-
-      for (const t of adjacentTokens) {
-         if (ammoProcured >= actualLoadQty) break
-         const ammoItem = t.actor.items.find(
-            (i) =>
-               AmmunitionManager.isAmmoItem(i) &&
-               (i.system?.slug || slugify(i.name)) === choice.slug,
-         )
-         if (ammoItem) {
-            const qtyAvailable = ammoItem.system.quantity
-            if (qtyAvailable > 0) {
-               const take = Math.min(qtyAvailable, actualLoadQty - ammoProcured)
-               extracts.push({ uuid: ammoItem.uuid, take })
-               ammoProcured += take
-            }
-         }
-      }
-      if (ammoProcured === 0) {
-         return ui.notifications.warn(tKey("Notifications.NoAdjacentAmmo"))
-      }
-   } else {
-      ammoProcured = actualLoadQty
-   }
-
-   await SiegeSocketManager.executeLoad(
-      siege.uuid,
-      choice,
-      extracts,
-      crewman.uuid,
-      ammoProcured,
-      flag.takeAmmoFromAdjacent,
-   )
-
-   const usedName = tKey("Markers.ActionUsedSuffix", { name: actionItem.name })
-   const loadEffects = siege.itemTypes.effect.filter(
-      (ef) => ef.name === usedName,
-   )
-   if (loadEffects.length > 0) {
-      await SiegeSocketManager.modifySiegeItem(
-         siege.uuid,
-         "delete",
-         loadEffects.map((ef) => ef.id),
-      )
-   }
-}
-
-async function _handleAbilityAttack(
-   actionItem,
-   siege,
-   flag,
-   detailsBody,
-   applyEffects,
-) {
-   const isAreaOrSave =
-      flag.actionType === "area-fire" ||
-      flag.actionType === "auto-fire" ||
-      flag.actionType === "save-single"
-
-   if (!isAreaOrSave) {
-      await actionItem.toMessage(undefined, {
-         speaker: ChatMessage.getSpeaker({ actor: siege }),
-      })
-      await applyEffects()
-      return
-   }
-
-   const damageParts = flag.damageParts || []
-   const damageFormula = damageParts
-      .map((p) => {
-         const faces = p.die === "-" ? "" : p.die
-         const base = `${p.dice}${faces}`
-         const tags = [p.type]
-         if (p.category && p.category !== "normal") tags.push(p.category)
-         return `${base}[${tags.join(",")}]`
-      })
-      .join(",")
-
-   let finalAreaType = flag.areaType
-   let finalAreaSize = flag.areaSize
-
-   if (detailsBody.find(".siege-corner-shot-cb").is(":checked")) {
-      if (flag.areaType === "burst") {
-         finalAreaType = "line"
-         finalAreaSize = flag.areaSize * 2
-      } else if (flag.areaType === "line") {
-         finalAreaType = "burst"
-         finalAreaSize = Math.max(5, flag.areaSize / 2)
-      }
-   }
-
-   const inlineTemplate =
-      flag.actionType === "save-single"
-         ? ""
-         : `@Template[type:${finalAreaType}|distance:${finalAreaSize}]`
-   const inlineSave = `@Check[type:reflex|dc:${flag.saveDC}|traits:${flag.actionType}|showDC:all]`
-   const inlineDamage = `@Damage[${damageFormula}]`
-
-   const ephemeralData = actionItem.toObject()
-   if (!ephemeralData.system.traits) ephemeralData.system.traits = { value: [] }
-   if (
-      Array.isArray(ephemeralData.system.traits.value) &&
-      !ephemeralData.system.traits.value.includes("siege-weapon")
-   ) {
-      ephemeralData.system.traits.value.push("siege-weapon")
-   }
-   ephemeralData.system.description.value += `<hr><p class="siege-ability-template">${inlineTemplate}</p><p>${inlineSave}</p><p>${inlineDamage}</p>`
-
-   const tempAttack = new Item.implementation(ephemeralData, { parent: siege })
-   const siegeTokenDoc = siege.getActiveTokens()[0]?.document
-   const hookId = Hooks.once("preCreateChatMessage", (msg) => {
-      msg.updateSource({
-         "speaker.alias": siege.name,
-         "speaker.token": siegeTokenDoc?.id || null,
-      })
-   })
-
-   try {
-      await tempAttack.toMessage(undefined, {
-         speaker: ChatMessage.getSpeaker({ actor: siege }),
-      })
-      await applyEffects()
-   } finally {
-      Hooks.off("preCreateChatMessage", hookId)
-   }
-}
-
-async function _handleStrike(e, actionItem, siege, crewman, flag, ctx) {
-   const {
-      customOptions,
-      rollContext,
-      shorthandedPenalty,
-      distance,
-      isPortable,
-      detailsBody,
-      applyEffects,
-      app,
-   } = ctx
-   const strikeLabel = actionItem.name
-
-   let generatedStrike = crewman.system.actions?.find(
-      (act) => act.type === "strike" && act.label === strikeLabel,
-   )
-   if (!generatedStrike) {
-      ui.notifications.warn(tKey("Notifications.StrikeNotFoundRemount"))
-      return app.close()
-   }
-
-   const highestStr = _calcHighestStr(isPortable, detailsBody, siege)
-   const reload = await _maybeUpdateStrikeRules(
-      crewman,
-      siege,
-      strikeLabel,
-      rollContext.versatileType,
-      flag,
-      highestStr,
-   )
-   if (reload === "missing") {
-      ui.notifications.warn(tKey("Notifications.FailedReloadStrike"))
-      return app.close()
-   }
-   if (reload) generatedStrike = reload
-
-   const weaponMod = generatedStrike.totalModifier
-   const { bestMod, bestSkillName } = computeBestModifier(
-      crewman,
-      flag,
-      weaponMod,
-   )
-   const modDiff = bestMod - weaponMod
-
-   const choice = await _showStrikeOptionsDialog(actionItem, flag)
-   if (!choice) return
-
-   const modifiers = _buildStrikeModifiers(choice, {
-      modDiff,
-      bestSkillName,
-      shorthandedPenalty,
-      flag,
-      distance,
-      rollContext,
-   })
-
-   const siegeTokenId = getSiegeTokenId(siege)
-   let rolling = true
-
-   const hookId = Hooks.on("preCreateChatMessage", (msg) => {
-      if (!rolling) return
-      const type = msg.flags?.pf2e?.context?.type
-      if (type !== "attack-roll") return
-      _updateAttackMessage(msg, {
+   if (btnType === "ability-attack") {
+      await handleAbilityAttack(
+         actionItem,
          siege,
-         siegeTokenId,
+         flag,
+         body,
+         applyEffects,
+         crewman,
+      )
+      await applyConsequences({
          actionItem,
          flag,
-         strikeLabel,
+         outcome: usedSkillRoll ? skillRollOutcome || "success" : "no-roll",
          crewman,
-         rollContext,
+         siege,
       })
+
+      appShim.render?.({ force: false })
+      return true
+   }
+
+   if (isStrike) {
+      const strikeResult = await handleStrike(eventObj, actionItem, siege, crewman, flag, {
+         customOptions,
+         rollContext,
+         shorthandedPenalty: state.shorthandedPenalty,
+         distance,
+         isPortable: state.isPortable,
+         detailsBody: body,
+         applyEffects,
+         app: appShim,
+      })
+      return !!strikeResult
+   }
+
+appShim.render?.({ force: false })
+   return true
+}
+
+export async function runLoadActionForStrike(siege, crewman, strikeAction, event = null) {
+   if (!siege || !crewman || !strikeAction) return false
+   const position = _positionForCrewman(crewman, siege)
+   const state = _buildDialogState(crewman, siege, position)
+   const loadAction = state.actions.find(
+      (item) =>
+         item.name === tKey("ActionTemplates.Load.Name") ||
+         item.name === "Loading",
+   )
+   if (!loadAction) {
+      ui.notifications.warn(tKey("Notifications.NoAvailableActions"))
+      return false
+   }
+   return executeActionItem({
+      event,
+      crewman,
+      siege,
+      actionItem: loadAction,
+      preselectedLoadStrikeId: strikeAction.id,
+      ctx: state.ctx,
+   })
+}
+
+function _positionForCrewman(crewman, siege) {
+   const effect = crewman?.itemTypes?.effect?.find(
+      (e) =>
+         e.getFlag(MODULE_ID, "siegeId") === siege?.id &&
+         e.getFlag(MODULE_ID, "position"),
+   )
+   return effect?.getFlag(MODULE_ID, "position") || null
+}
+
+function _defaultButtonType(actionItem, flag, isLoading) {
+   if (flag.isStrike) return "strike"
+   if (flag.isAttack && flag.skills?.length > 0) return "skill"
+   if (flag.isAttack) return "ability-attack"
+   if (flag.skills?.length > 0) return "skill"
+   if (isLoading) return "none"
+   return "none"
+}
+
+async function _normalizeSiegeOffensiveEffectRules(siege) {
+   const updates = siegeOffensiveEffectRuleUpdates(siege)
+   if (updates.length === 0) return
+   await SiegeSocketManager.modifySiegeItem(siege.uuid, "update", updates, {
+      siegeEffectRuleNormalize: true,
+   })
+}
+
+function _isRepairAction(actionItem) {
+   return (
+      actionItem?.name === tKey("ActionTemplates.Repair.Name") ||
+      actionItem?.name === tKey("ActionMacro.Repair") ||
+      actionItem?.name === "Repair"
+   )
+}
+
+async function _promptSkillIndex(crewman, flag, autoDC) {
+   const skills = flag.skills || []
+   if (skills.length === 0) return null
+   if (skills.length === 1) return 0
+
+   const options = skills
+      .map((s, idx) => {
+         const label = formatProficiency(s)
+         return `<option value="${idx}">${escapeHTML(label)} (DC ${resolveActionDC(
+            crewman,
+            s.dc,
+            autoDC,
+         )})</option>`
+      })
+      .join("")
+   const content = await renderHbs(tplPath("macros/skill-choice-dialog.hbs"), {
+      label: tKey("ActionMacro.SkillChoiceLabel"),
+      options,
    })
 
-   try {
-      await generatedStrike.variants[choice.mapIndex].roll({
-         event: e.originalEvent ?? e,
-         modifiers,
-         options: customOptions,
-      })
-   } finally {
-      rolling = false
-      Hooks.off("preCreateChatMessage", hookId)
-   }
-
-   await applyEffects()
-   SiegeSFXManager.play(siege, `action-${actionItem.id}`)
-   app.close()
-}
-
-function _calcHighestStr(isPortable, detailsBody, siege) {
-   if (!isPortable || !detailsBody.find(".siege-highest-str-cb").is(":checked"))
-      return 0
-   let highestStr = 0
-   for (const actor of game.actors) {
-      if (
-         actor.itemTypes.effect.some(
-            (e) => e.getFlag(MODULE_ID, "siegeId") === siege.id,
-         )
-      ) {
-         const strMod = actor.system.abilities?.str?.mod || 0
-         if (strMod > highestStr) highestStr = strMod
-      }
-   }
-   return highestStr
-}
-
-async function _maybeUpdateStrikeRules(
-   crewman,
-   siege,
-   strikeLabel,
-   versatileType,
-   flag,
-   highestStr,
-) {
-   const mountedEffect = crewman.itemTypes.effect.find(
-      (e) => e.getFlag(MODULE_ID, "siegeId") === siege.id,
-   )
-   if (!mountedEffect) return null
-
-   const newRules = foundry.utils.deepClone(mountedEffect.system.rules)
-   const strikeRule = newRules.find(
-      (r) => r.key === "Strike" && r.label === strikeLabel,
-   )
-   let rulesChanged = false
-
-   if (strikeRule) {
-      const targetDamageType =
-         versatileType || flag.damageParts?.[0]?.type || "bludgeoning"
-      if (strikeRule.damage.base.damageType !== targetDamageType) {
-         strikeRule.damage.base.damageType = targetDamageType
-         rulesChanged = true
-      }
-   }
-
-   const existingStrIdx = newRules.findIndex(
-      (r) => r.slug === "siege-str-damage",
-   )
-   if (highestStr > 0) {
-      if (existingStrIdx >= 0) newRules.splice(existingStrIdx, 1)
-      newRules.push({
-         key: "FlatModifier",
-         slug: "siege-str-damage",
-         selector: "strike-damage",
-         predicate: [`siege-weapon:${slugify(siege.name)}`],
-         value: highestStr,
-         type: "untyped",
-         label: tKey("Modifiers.CrewStrengthBonus"),
-      })
-      rulesChanged = true
-   } else if (existingStrIdx >= 0) {
-      newRules.splice(existingStrIdx, 1)
-      rulesChanged = true
-   }
-
-   if (!rulesChanged) return null
-
-   await mountedEffect.update({ "system.rules": newRules })
-   const updated = crewman.system.actions?.find(
-      (act) => act.type === "strike" && act.label === strikeLabel,
-   )
-   return updated || "missing"
-}
-
-async function _showStrikeOptionsDialog(actionItem, flag) {
-   const mapHtml = flag.subjectToMAP
-      ? `<div class="form-group siege-form-group"><label><strong>${tKey("ActionMacro.AttackTier")}</strong></label><select id="siege-map-val"><option value="0">${tKey("ActionMacro.MAP1")}</option><option value="1">${tKey("ActionMacro.MAP2")}</option><option value="2">${tKey("ActionMacro.MAP3")}</option></select></div>`
-      : `<input type="hidden" id="siege-map-val" value="0">`
-
-   return foundry.applications.api.DialogV2.wait({
-      window: {
-         title: tKey("ActionMacro.RollOptionsTitle", { name: actionItem.name }),
-      },
-      content: `${mapHtml}<div class="form-group siege-form-group"><label><strong>${tKey("ActionMacro.SituationalModifier")}</strong></label><input type="number" id="siege-sit-mod" value="0"></div>`,
+   const choice = await foundry.applications.api.DialogV2.wait({
+      classes: ["siege-v2-dialog"],
+      window: { title: tKey("ActionMacro.SkillChoiceTitle") },
+      content,
       buttons: [
          {
             action: "roll",
-            label: tKey("ActionMacro.RollAttack"),
+            label: tKey("ActionMacro.RollSkill"),
             icon: "fa-solid fa-dice-d20",
-            callback: () => ({
-               mapIndex:
-                  parseInt(document.getElementById("siege-map-val")?.value) ||
-                  0,
-               sit:
-                  parseInt(document.getElementById("siege-sit-mod")?.value) ||
-                  0,
-            }),
+            callback: () =>
+               parseInt(document.getElementById("siege-skill-choice")?.value),
          },
       ],
-   })
-}
-
-function _buildStrikeModifiers(choice, ctx) {
-   const {
-      modDiff,
-      bestSkillName,
-      shorthandedPenalty,
-      flag,
-      distance,
-      rollContext,
-   } = ctx
-   const modifiers = []
-
-   if (choice.sit !== 0) {
-      const m = makeModifier(
-         "situational",
-         tKey("Modifiers.Situational"),
-         choice.sit,
-         "untyped",
-      )
-      if (m) modifiers.push(m)
-   }
-
-   if (rollContext.baseHasNonlethal && !rollContext.isNonlethalChecked) {
-      const m = makeModifier(
-         "lethal-penalty",
-         tKey("Modifiers.LethalPenalty"),
-         -2,
-         "circumstance",
-      )
-      if (m) modifiers.push(m)
-   }
-
-   if (modDiff > 0) {
-      const m = makeModifier(
-         "skill-substitution",
-         tKey("Modifiers.SkillBonus", { name: bestSkillName }),
-         modDiff,
-         "untyped",
-      )
-      if (m) modifiers.push(m)
-   }
-
-   if (shorthandedPenalty < 0) {
-      const m = makeModifier(
-         "shorthanded-penalty",
-         tKey("Modifiers.Shorthanded"),
-         shorthandedPenalty,
-         "circumstance",
-      )
-      if (m) modifiers.push(m)
-   }
-
-   const rangeIncrement = parseInt(flag.rangeIncrement) || 0
-   if (
-      flag.isRanged !== false &&
-      distance !== null &&
-      rangeIncrement > 0 &&
-      distance > rangeIncrement
-   ) {
-      const extraIncrements = Math.ceil(distance / rangeIncrement) - 1
-      if (extraIncrements > 0) {
-         const m = makeModifier(
-            "range-penalty",
-            tKey("Modifiers.RangePenalty"),
-            -2 * extraIncrements,
-            "untyped",
-         )
-         if (m) modifiers.push(m)
-      }
-   }
-
-   const minRange = parseInt(flag.minRange) || 0
-   if (
-      flag.isRanged !== false &&
-      distance !== null &&
-      minRange > 0 &&
-      distance <= minRange
-   ) {
-      const m = makeModifier(
-         "volley",
-         tKey("Modifiers.Volley"),
-         -2,
-         "circumstance",
-      )
-      if (m) modifiers.push(m)
-   }
-
-   return modifiers
-}
-
-function _updateAttackMessage(msg, ctx) {
-   const {
-      siege,
-      siegeTokenId,
-      actionItem,
-      flag,
-      strikeLabel,
-      crewman,
-      rollContext,
-   } = ctx
-   const currentTraits = msg.flags?.pf2e?.context?.traits || []
-   let newTraits = [...currentTraits]
-
-   if (!newTraits.some((t) => t.name === "siege-weapon")) {
-      newTraits.push({
-         name: "siege-weapon",
-         label: tKey("Traits.SiegeWeapon"),
-      })
-   }
-
-   for (const t of splitCSV(flag.traits)) {
-      if (!newTraits.some((existing) => existing.name === t)) {
-         newTraits.push({ name: t, label: capitalize(t) })
-      }
-   }
-
-   if (rollContext.baseHasNonlethal && !rollContext.isNonlethalChecked) {
-      newTraits = newTraits.filter((t) => t.name !== "nonlethal")
-   }
-
-   const updates = {
-      "speaker.alias": siege.name,
-      "speaker.token": siegeTokenId,
-      "flags.pf2e.origin.uuid": actionItem.uuid,
-      "flags.pf2e.origin.type": actionItem.type,
-      "flags.pf2e.context.traits": newTraits,
-      [`flags.${MODULE_ID}.crewmanId`]: crewman.id,
-      [`flags.${MODULE_ID}.strikeLabel`]: strikeLabel,
-      [`flags.${MODULE_ID}.siegeId`]: siege.id,
-      [`flags.${MODULE_ID}.siegeTokenId`]: siegeTokenId,
-   }
-
-   if (
-      rollContext.versatileType &&
-      msg.flags?.pf2e?.strike?.item?.system?.damage
-   ) {
-      updates["flags.pf2e.strike.item.system.damage.damageType"] =
-         rollContext.versatileType
-   }
-
-   msg.updateSource(updates)
+   }).catch(() => null)
+   return Number.isInteger(choice) ? choice : null
 }

@@ -1,0 +1,379 @@
+.siege-actions-accordion {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+}
+.siege-actions-accordion details {
+   border: 1px solid var(--color-border-dark-4);
+   border-radius: 8px;
+   background: var(--color-bg-option);
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+   overflow: hidden;
+}
+.siege-actions-accordion summary {
+   display: flex;
+   align-items: center;
+   padding: 8px 12px;
+   background: #302831;
+   color: var(--color-text-dark-primary);
+   font-weight: bold;
+   cursor: pointer;
+   list-style: none;
+   transition: background 0.2s;
+}
+.siege-actions-accordion summary::-webkit-details-marker {
+   display: none;
+}
+.siege-actions-accordion .action-name {
+   flex: 1;
+   display: flex;
+   align-items: center;
+   gap: 8px;
+}
+.siege-actions-accordion summary .chevron {
+   margin-left: auto;
+   transition: transform 0.2s ease-in-out;
+   color: var(--color-text-dark-primary);
+}
+.siege-actions-accordion details[open] summary .chevron {
+   transform: rotate(90deg);
+}
+.siege-actions-accordion .details-body {
+   padding: 12px;
+   background: #040404;
+   color: #e0e0e0;
+   border-top: 1px solid var(--color-border-dark-4);
+}
+.siege-actions-accordion details.siege-action-ignition-blocked {
+   opacity: 0.62;
+}
+.siege-actions-accordion details.siege-action-disabled,
+.siege-vehicle-hud .siege-action-disabled,
+.tab.actions .item.siege-action-disabled,
+.siege-weapon-row.siege-action-disabled {
+   opacity: 0.58;
+   filter: grayscale(0.55);
+}
+.siege-ignition-required {
+   color: #ff5555;
+   font-size: 0.78rem;
+   font-weight: 700;
+   margin: 4px 0 0;
+}
+.siege-action-disabled-reason,
+.vh-action-disabled-reason,
+.siege-weapon-disabled-reason {
+   color: #ff8c8c;
+   font-size: 0.78rem;
+   font-weight: 700;
+   margin: 4px 0 0;
+}
+
+.roll-siege-btn {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 6px;
+   margin-top: 10px;
+   background: rgba(255, 255, 255, 0.1);
+   color: #fff;
+   border: 1px solid rgba(255, 255, 255, 0.2);
+   border-radius: 4px;
+   padding: 6px 12px;
+   cursor: pointer;
+   transition: all 0.2s;
+}
+.roll-siege-btn:hover {
+   background: rgba(255, 255, 255, 0.2);
+   text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.siege-v2-app,
+.siege-v2-dialog {
+   --siege-cobalt-deep: #0a1a3f;
+   --siege-cobalt-bg: #050d22;
+   --siege-cobalt: #11337a;
+   --siege-cobalt-bright: #2255cc;
+   --siege-cobalt-glow: #4f8cff;
+   --siege-cobalt-line: #2a4f9e;
+   --siege-command-gold: #e8c14a;
+   --siege-command-gold-dark: #6b5410;
+   --siege-text: #eaf1ff;
+   --siege-text-soft: #cfe0ff;
+   --siege-graphite: #17191d;
+}
+.siege-v2-app .window-header,
+.siege-v2-dialog .window-header {
+   background: linear-gradient(160deg, var(--siege-graphite), #05070c);
+   color: var(--siege-text);
+   border-bottom: 1px solid var(--siege-cobalt-line);
+   box-shadow: inset 0 -1px 0 rgba(79, 140, 255, 0.18);
+}
+.siege-v2-app .window-header .window-title,
+.siege-v2-dialog .window-header .window-title {
+   color: var(--siege-text);
+   font-weight: 700;
+   letter-spacing: 0;
+}
+.siege-v2-app .window-header button,
+.siege-v2-dialog .window-header button {
+   background: transparent;
+   color: var(--siege-text-soft);
+   border: 0;
+}
+.siege-v2-app .window-content,
+.siege-v2-dialog .window-content {
+   background: linear-gradient(
+      160deg,
+      var(--siege-cobalt-deep),
+      var(--siege-cobalt-bg)
+   );
+   color: var(--siege-text);
+   border: 1px solid rgba(79, 140, 255, 0.35);
+   border-top: 0;
+   box-shadow: inset 0 0 18px rgba(79, 140, 255, 0.08);
+}
+.siege-v2-app .window-content {
+   padding: 12px;
+}
+.siege-v2-dialog .window-content {
+   padding: 14px;
+}
+.siege-v2-app p,
+.siege-v2-dialog p,
+.siege-v2-app label,
+.siege-v2-dialog label,
+.siege-v2-app strong,
+.siege-v2-dialog strong,
+.siege-v2-app .notes,
+.siege-v2-dialog .notes,
+.siege-v2-app .hint,
+.siege-v2-dialog .hint {
+   color: var(--siege-text);
+}
+.siege-v2-app .notes,
+.siege-v2-dialog .notes,
+.siege-v2-app .hint,
+.siege-v2-dialog .hint {
+   color: var(--siege-text-soft);
+   opacity: 0.9;
+}
+.siege-v2-app a,
+.siege-v2-dialog a {
+   color: var(--siege-cobalt-glow);
+}
+.siege-v2-app ul,
+.siege-v2-dialog ul {
+   color: var(--siege-text);
+}
+.siege-v2-app table,
+.siege-v2-dialog table {
+   color: var(--siege-text);
+   border-collapse: collapse;
+}
+.siege-v2-app th,
+.siege-v2-dialog th {
+   background: rgba(17, 51, 122, 0.45);
+   color: var(--siege-command-gold);
+   border-bottom: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-app td,
+.siege-v2-dialog td {
+   border-bottom: 1px solid rgba(79, 140, 255, 0.18);
+}
+.siege-v2-app hr,
+.siege-v2-dialog hr,
+.siege-v2-app .siege-sep,
+.siege-v2-dialog .siege-sep {
+   border: 0;
+   border-top: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-app input:not([type="checkbox"]):not([type="radio"]),
+.siege-v2-dialog input:not([type="checkbox"]):not([type="radio"]),
+.siege-v2-app select,
+.siege-v2-dialog select,
+.siege-v2-app textarea,
+.siege-v2-dialog textarea {
+   background: rgba(0, 0, 0, 0.32);
+   color: var(--siege-text);
+   border: 1px solid var(--siege-cobalt-bright);
+   border-radius: 4px;
+   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.siege-v2-app input:not([type="checkbox"]):not([type="radio"]):focus,
+.siege-v2-dialog input:not([type="checkbox"]):not([type="radio"]):focus,
+.siege-v2-app select:focus,
+.siege-v2-dialog select:focus,
+.siege-v2-app textarea:focus,
+.siege-v2-dialog textarea:focus {
+   border-color: var(--siege-cobalt-glow);
+   box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.5);
+   outline: none;
+}
+.siege-v2-app option,
+.siege-v2-dialog option,
+.siege-v2-app optgroup,
+.siege-v2-dialog optgroup {
+   background: var(--siege-cobalt-bg);
+   color: var(--siege-text);
+}
+.siege-v2-app input[type="checkbox"],
+.siege-v2-dialog input[type="checkbox"],
+.siege-v2-app input[type="radio"],
+.siege-v2-dialog input[type="radio"] {
+   accent-color: var(--siege-cobalt-glow);
+}
+.siege-v2-app button,
+.siege-v2-dialog button,
+.siege-v2-app .roll-siege-btn,
+.siege-v2-dialog .roll-siege-btn {
+   background: var(--siege-cobalt);
+   color: var(--siege-text);
+   border: 1px solid var(--siege-cobalt-bright);
+   border-radius: 5px;
+   text-shadow: none;
+   transition: filter 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+.siege-v2-app button:hover,
+.siege-v2-dialog button:hover,
+.siege-v2-app .roll-siege-btn:hover,
+.siege-v2-dialog .roll-siege-btn:hover {
+   background: var(--siege-cobalt-bright);
+   border-color: var(--siege-cobalt-glow);
+   filter: brightness(1.08);
+   text-shadow: none;
+}
+.siege-v2-app button:disabled,
+.siege-v2-dialog button:disabled,
+.siege-v2-app .roll-siege-btn:disabled,
+.siege-v2-dialog .roll-siege-btn:disabled {
+   filter: grayscale(0.65) brightness(0.65);
+   cursor: not-allowed;
+   opacity: 0.65;
+}
+.siege-v2-dialog .dialog-buttons {
+   gap: 8px;
+   margin-top: 12px;
+   padding-top: 10px;
+   border-top: 1px solid rgba(79, 140, 255, 0.35);
+}
+.siege-v2-dialog .dialog-buttons button,
+.siege-v2-dialog button.default {
+   background: rgba(107, 84, 16, 0.96);
+   color: #fff3cf;
+   border-color: var(--siege-command-gold);
+}
+.siege-v2-dialog .dialog-buttons button:hover,
+.siege-v2-dialog button.default:hover {
+   background: rgba(135, 106, 22, 0.98);
+   border-color: #fff0a8;
+}
+.siege-v2-dialog .dialog-buttons button[data-action="cancel"] {
+   background: var(--siege-cobalt);
+   color: var(--siege-text);
+   border-color: var(--siege-cobalt-bright);
+}
+.siege-v2-dialog .dialog-buttons button[data-action="cancel"]:hover {
+   background: var(--siege-cobalt-bright);
+   border-color: var(--siege-cobalt-glow);
+}
+.siege-v2-app .siege-section-header,
+.siege-v2-dialog .siege-section-header {
+   color: var(--siege-command-gold);
+   border-bottom: 1px solid rgba(232, 193, 74, 0.45);
+   margin: 12px 0 8px;
+   padding-bottom: 4px;
+   font-weight: 700;
+}
+.siege-v2-app .siege-actions-accordion details,
+.siege-v2-dialog .siege-actions-accordion details {
+   background: rgba(5, 13, 34, 0.9);
+   border: 1px solid var(--siege-cobalt-line);
+   box-shadow: 0 0 10px rgba(79, 140, 255, 0.1);
+}
+.siege-v2-app .siege-actions-accordion summary,
+.siege-v2-dialog .siege-actions-accordion summary {
+   background: linear-gradient(160deg, var(--siege-cobalt), var(--siege-cobalt-deep));
+   color: var(--siege-text);
+}
+.siege-v2-app .siege-actions-accordion summary .chevron,
+.siege-v2-dialog .siege-actions-accordion summary .chevron {
+   color: var(--siege-text-soft);
+}
+.siege-v2-app .siege-actions-accordion .details-body,
+.siege-v2-dialog .siege-actions-accordion .details-body {
+   background: rgba(5, 13, 34, 0.92);
+   color: var(--siege-text);
+   border-top: 1px solid rgba(79, 140, 255, 0.28);
+}
+.siege-v2-app .siege-info-box,
+.siege-v2-dialog .siege-info-box,
+.siege-v2-app .vehicle-penalties,
+.siege-v2-dialog .vehicle-penalties,
+.siege-v2-app .siege-banner,
+.siege-v2-dialog .siege-banner {
+   background: rgba(17, 51, 122, 0.32);
+   border: 1px solid rgba(79, 140, 255, 0.32);
+   border-radius: 5px;
+}
+.siege-v2-app .vehicle-penalties,
+.siege-v2-dialog .vehicle-penalties {
+   padding: 8px;
+}
+.siege-v2-app .siege-banner-error,
+.siege-v2-dialog .siege-banner-error {
+   background: rgba(90, 19, 32, 0.78);
+   border-color: #a8324a;
+   color: #ffd6de;
+}
+.siege-v2-app .siege-banner-warn,
+.siege-v2-dialog .siege-banner-warn {
+   background: rgba(107, 84, 16, 0.45);
+   border-color: var(--siege-command-gold);
+   color: #fff3cf;
+}
+.siege-v2-app .siege-warn,
+.siege-v2-dialog .siege-warn,
+.siege-v2-app .siege-ignition-required,
+.siege-v2-dialog .siege-ignition-required {
+   color: #ff6b6b;
+}
+.siege-actions-app .roll-siege-btn {
+   background: rgba(107, 84, 16, 0.96);
+   color: #fff3cf;
+   border-color: var(--siege-command-gold);
+}
+.siege-actions-app .roll-siege-btn:hover {
+   background: rgba(135, 106, 22, 0.98);
+   border-color: #fff0a8;
+   filter: brightness(1.08);
+}
+.siege-actions-app .roll-siege-btn.siege-action-btn-cobalt {
+   background: var(--siege-cobalt);
+   color: var(--siege-text);
+   border-color: var(--siege-cobalt-bright);
+}
+.siege-actions-app .roll-siege-btn.siege-action-btn-cobalt:hover {
+   background: var(--siege-cobalt-bright);
+   border-color: var(--siege-cobalt-glow);
+}
+.siege-v2-app.siege-actions-app .window-content {
+   max-height: 600px;
+   overflow-y: auto;
+}
+.siege-actions-app .siege-exit-vehicle-btn {
+   background: rgba(90, 19, 32, 0.96);
+   color: #ffd6de;
+   border-color: #a8324a;
+}
+.siege-actions-app .siege-exit-vehicle-btn:hover {
+   background: rgba(124, 26, 45, 0.98);
+   border-color: #ff6b86;
+}
+
+.siege-mount-app .mount-position-body,
+.siege-enter-app .mount-position-body {
+   max-height: 210px;
+   overflow-y: auto;
+}
+

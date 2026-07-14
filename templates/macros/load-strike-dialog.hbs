@@ -1,0 +1,30 @@
+<div class="form-group">
+   <label>{{labels.strike}}</label>
+   <select id="load-strike-id">
+      {{#each strikes}}
+         <option value="{{id}}" data-loaded="{{loaded}}" data-max="{{max}}" data-cap="{{cap}}" data-ammo="{{ammoName}}" data-replacing="{{replacingAttr}}" data-progress-only="{{progressOnlyAttr}}" data-progress="{{loadProgress}}" data-progress-target="{{loadRequired}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+      {{/each}}
+   </select>
+</div>
+<div class="form-group" id="load-ammo-qty-row">
+   <label>{{labels.amount}}</label>
+   <input type="number" id="load-ammo-qty" value="1" min="1">
+</div>
+<p id="load-ammo-tracker" class="notes siege-load-tracker">{{trackerText}}</p>
+<div id="load-ammo-types-container">
+   {{#each strikes}}
+      <div class="siege-load-ammo-types-panel" data-action-id="{{id}}" style="display: none;">
+         {{#if progressOnly}}
+            <p class="notes">{{progressOnlyHint}}</p>
+         {{else}}
+            <details class="vh-ammo-outer-acc siege-action-ammo-types">
+               <summary>
+                  <span><i class="fa-solid fa-bomb"></i> {{../labels.ammunitionTypes}}</span>
+                  <i class="fa-solid fa-chevron-right chevron"></i>
+               </summary>
+               <div class="details-body">{{{ammoTypesHtml}}}</div>
+            </details>
+         {{/if}}
+      </div>
+   {{/each}}
+</div>

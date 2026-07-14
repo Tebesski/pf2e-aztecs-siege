@@ -1,0 +1,13 @@
+<div class="pf2e chat-card item-card atw-mtcard siege-consequence-card siege-save-card" data-mode="save">
+   <header class="card-header flexrow">
+      {{{headerIcon}}}
+      <h3>{{title}}</h3>
+   </header>
+   <section class="card-content">
+      <p><strong>{{defenseLabel}}:</strong> {{#if basicSave}}{{basicLabel}} {{/if}}{{saveLabel}} &middot; <strong>{{dcLabel}} {{dc}}</strong></p>
+   </section>
+   {{{basicDamageBlock}}}
+   <div class="pf2e-toolbelt-target-targetRows pf2e-toolbelt-target-damage siege-consequence-targets">
+      {{{targetRows}}}
+   </div>
+</div>

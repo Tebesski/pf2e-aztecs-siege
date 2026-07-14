@@ -1,4 +1,30 @@
 <div class="tab siege siege-tab" data-tab="siege">
+   {{#if vehicleNeedsIgnition}}
+   <div class="form-group siege-checkbox-row">
+      <label class="checkbox">
+         <input type="checkbox" data-action-path="needsIgnition" {{#if flags.needsIgnition}}checked{{/if}}>
+         {{i18n.needsIgnition}}
+         <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.needsIgnitionHint}}"></i>
+      </label>
+   </div>
+   {{/if}}
+   <div class="form-group siege-checkbox-row">
+      <label class="checkbox">
+         <input type="checkbox" data-action-path="isComponent" {{#if flags.isComponent}}checked{{/if}}>
+         {{i18n.isComponent}}
+      </label>
+   </div>
+   {{#if flags.isComponent}}
+   <div class="form-group">
+      <label>{{i18n.componentType}}</label>
+      <select data-action-path="componentType">
+         <option value="">{{i18n.selectComponentType}}</option>
+         {{#each componentTypeOptions}}
+         <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+         {{/each}}
+      </select>
+   </div>
+   {{/if}}
    <div class="form-group align-top">
       <label>{{i18n.crewAccess}}</label>
       <div class="crew-access-container">
@@ -9,12 +35,34 @@
             {{/each}}
          </select>
          <div class="crew-access-badges">
+            {{#if allCrewAccess}}
+            <span class="crew-access-badge">{{i18n.all}}</span>
+            {{/if}}
             {{#each flags.crewAccess}}
             <span class="crew-access-badge">{{this}} <a class="remove-crew-access" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a></span>
             {{/each}}
          </div>
       </div>
    </div>
+
+   {{#if ranksEnabled}}
+   <div class="form-group align-top">
+      <label>{{i18n.requiredRank}}</label>
+      <div class="crew-access-container">
+         <select class="add-required-rank-select">
+            <option value="">-- {{i18n.addRank}} --</option>
+            {{#each availableRanks}}
+            <option value="{{this.value}}">{{this.label}}</option>
+            {{/each}}
+         </select>
+         <div class="crew-access-badges">
+            {{#each requiredRankBadges}}
+            <span class="crew-access-badge">{{this.label}} <a class="remove-required-rank" data-rank="{{this.value}}"><i class="fa-solid fa-times"></i></a></span>
+            {{/each}}
+         </div>
+      </div>
+   </div>
+   {{/if}}
 
    <div class="form-group align-top">
       <label>{{i18n.prerequisites}}</label>
@@ -24,22 +72,24 @@
             {{#each availablePrereqs}}
             <option value="{{this}}">{{this}}</option>
             {{/each}}
-         </select>
-         <div class="crew-access-badges">
+         </select>         <div class="crew-access-badges">
             {{#each enrichedPrereqs}}
             <span class="crew-access-badge">{{this.name}}
-               {{#if this.showCount}}
-               <input type="number" class="prereq-count-input siege-prereq-count" data-index="{{@index}}" value="{{this.count}}" min="1">
+               {{#if this.displayCount}}
+               <span class="siege-prereq-count-display">{{this.displayCount}}</span>
                {{/if}}
-               <a class="remove-prereq" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a>
+               {{#if this.showCount}}
+               <input type="number" class="prereq-count-input siege-prereq-count" data-index="{{this.index}}" value="{{this.count}}" min="1">
+               {{/if}}
+               {{#if this.removable}}
+               <a class="remove-prereq" data-index="{{this.index}}"><i class="fa-solid fa-times"></i></a>
+               {{/if}}
             </span>
             {{/each}}
          </div>
-         {{#unless showAttackHtml}}
          <label class="siege-inline-checkbox">
             <input type="checkbox" data-action-path="removePrereqsOnUse" {{#if flags.removePrereqsOnUse}}checked{{/if}}> {{i18n.removeOnUse}}
          </label>
-         {{/unless}}
       </div>
    </div>
 
@@ -52,14 +102,12 @@
       <input type="text" data-action-path="traits" value="{{flags.traits}}">
    </div>
 
-   {{#if isLoadingAction}}
+   {{#if showAttackHtml}}
    <div class="form-group">
-      <label>{{i18n.takeAmmoFromAdjacent}}</label>
-      <input type="checkbox" data-action-path="takeAmmoFromAdjacent" {{#if flags.takeAmmoFromAdjacent}}checked{{/if}}>
-   </div>
-   <div class="form-group">
-      <label>{{i18n.loadThreshold}}</label>
-      <input type="number" data-action-path="loadThreshold" value="{{flags.loadThreshold}}" min="1">
+      <label>{{i18n.loadActionsRequired}}
+         <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.loadActionsRequiredHint}}"></i>
+      </label>
+      <input type="number" data-action-path="loadActionsRequired" value="{{flags.loadActionsRequired}}" min="{{loadActionsMin}}">
    </div>
    {{/if}}
 
@@ -92,14 +140,25 @@
       </label>
    </div>
    <div class="siege-ammo-settings" {{#unless flags.usesAmmunition}}style="display: none;"{{/unless}}>
-      <div class="form-group">
+      <div class="form-group align-top">
          <label>{{i18n.ammunitionType}}</label>
-         <select data-action-path="ammoSlug">
-            <option value="">-- {{i18n.selectAmmunition}} --</option>
-            {{#each ammoOptions}}
-            <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-            {{/each}}
-         </select>
+         <div class="crew-access-container">
+            <select class="add-action-ammo-select">
+               <option value="">-- {{i18n.selectAmmunition}} --</option>
+               {{#each ammoOptions}}
+               <option value="{{this.value}}">{{this.label}}</option>
+               {{/each}}
+            </select>
+            <div class="crew-access-badges">
+               {{#each selectedAmmoBadges}}
+               <span class="crew-access-badge">{{this.label}} <a class="remove-action-ammo" data-slug="{{this.value}}"><i class="fa-solid fa-times"></i></a></span>
+               {{/each}}
+            </div>
+         </div>
+      </div>
+      <div class="form-group">
+         <label>{{i18n.maxLoaded}}</label>
+         <input type="number" data-action-path="maxLoaded" value="{{flags.maxLoaded}}" placeholder="1" min="1">
       </div>
       <div class="form-group">
          <label>{{i18n.spend}}</label>
@@ -130,7 +189,7 @@
                   {{/each}}
                </optgroup>
             </select>
-            <input type="text" class="prof-lore-name siege-flex-1" value="{{this.loreName}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
+            <input type="text" class="prof-lore-name siege-flex-1" value="{{this.loreInput}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
             <a class="remove-prof siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
          </div>
          {{/each}}
@@ -196,9 +255,26 @@
       </div>
    </div>
    <div class="siege-save-settings" {{#unless showSaveDCSettings}}style="display: none;"{{/unless}}>
-      <div class="form-group">
-         <label>{{i18n.saveDC}}</label>
-         <input type="number" data-action-path="saveDC" value="{{flags.saveDC}}">
+      <div class="form-group align-top">
+         <label>{{i18n.saveDC}}
+            <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.saveDCHint}}"></i>
+         </label>
+         <div class="crew-access-container">
+            <div class="siege-savedc-add-row">
+               <input type="text" class="siege-savedc-input" list="siege-savedc-presets">
+               <a class="add-savedc-path" data-tooltip="{{i18n.addAnother}}"><i class="fa-solid fa-plus"></i></a>
+            </div>
+            <datalist id="siege-savedc-presets">
+               {{#each saveDCPresets}}
+               <option value="{{this.value}}">{{this.label}}</option>
+               {{/each}}
+            </datalist>
+            <div class="crew-access-badges siege-savedc-list">
+               {{#each flags.saveDCPaths}}
+               <span class="crew-access-badge siege-savedc-badge">{{this}} <a class="remove-savedc-path" data-index="{{@index}}"><i class="fa-solid fa-times"></i></a></span>
+               {{/each}}
+            </div>
+         </div>
       </div>
    </div>
    {{/if}}
@@ -236,7 +312,7 @@
    </div>
    {{/if}}
 
-   {{#unless showAttackHtml}}
+   {{#if showRequiredSkillsSection}}
    <hr>
    <header class="siege-header">
       <h4>{{i18n.requiredSkills}}</h4>
@@ -250,11 +326,348 @@
             <option value="{{this.value}}" {{#if this.selected}}selected{{/if}} {{#if this.disabled}}disabled{{/if}}>{{this.label}}</option>
             {{/each}}
          </select>
-         <input type="text" class="lore-name siege-flex-1" value="{{this.loreName}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
-         <input type="number" class="skill-dc siege-input-fixed" value="{{this.dc}}" placeholder="{{../i18n.levelBasedDC}}">
+         <input type="text" class="lore-name siege-flex-1" value="{{this.loreInput}}" placeholder="{{../i18n.lorePlaceholder}}" {{#unless this.isLore}}style="display: none;"{{/unless}}>
+         <input type="text" class="skill-dc siege-input-fixed" value="{{this.dc}}" placeholder="{{../i18n.levelBasedDC}}">
          <a class="remove-skill siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
       </div>
       {{/each}}
    </div>
-   {{/unless}}
+   {{/if}}
+
+   <hr>
+   <header class="siege-header">
+      <h4>{{i18n.consequences}}</h4>
+      <a class="add-consequence siege-remove-icon"><i class="fa-solid fa-plus"></i> {{i18n.addConsequence}}</a>
+   </header>
+   <div class="siege-consequences-list">
+      {{#each enrichedConsequences}}
+      <div class="siege-consequence-row" data-index="{{this.index}}">
+         <div class="siege-flex-row siege-consequence-main-row">
+            <select class="consequence-outcome siege-flex-1" aria-label="{{../i18n.degreeOfSuccess}}">
+               {{#each this.outcomeOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+               {{/each}}
+            </select>
+            <select class="consequence-type siege-flex-1" aria-label="{{../i18n.consequenceType}}">
+               {{#each this.typeOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+               {{/each}}
+            </select>
+            <a class="remove-consequence siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+         </div>
+
+         {{#if this.isCondition}}
+         <div class="siege-consequence-detail-row consequence-condition-row">
+            <img class="consequence-condition-icon" src="{{this.conditionIcon}}" alt="">
+            <select class="consequence-condition siege-consequence-condition-select" aria-label="{{../i18n.condition}}">
+               {{#each this.conditionOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+               {{/each}}
+            </select>
+            <input type="number" class="consequence-condition-value siege-input-tiny" value="{{this.value}}" min="1" aria-label="{{../i18n.value}}" {{#unless this.conditionHasValue}}style="display: none;"{{/unless}}>
+            <span class="siege-consequence-separator">|</span>
+            <label class="siege-inline-checkbox-tight">
+               <input type="checkbox" class="consequence-duration-cb" {{#if this.hasDuration}}checked{{/if}}> {{../i18n.duration}}
+            </label>
+            <span class="consequence-duration-controls" {{#unless this.hasDuration}}style="display: none;"{{/unless}}>
+               <select class="consequence-duration-unit">
+                  {{#each this.durationUnitOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <input type="number" class="consequence-duration-value siege-input-tiny" value="{{this.durationValue}}" min="1">
+            </span>
+         </div>
+         <div class="siege-consequence-detail-row siege-consequence-target-row">
+            <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+               {{#each this.targetOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+               {{/each}}
+            </select>
+         </div>
+         {{/if}}
+
+         {{#if this.isEffect}}
+         <div class="siege-consequence-detail-row consequence-effect-row">
+            <img class="consequence-effect-icon" src="icons/svg/aura.svg" alt="">
+            <input type="text" class="consequence-effect-uuid siege-flex-2" value="{{this.effectUuid}}" placeholder="{{../i18n.uuid}}">
+            <a class="consequence-effect-link invalid">{{../i18n.uuid}}</a>
+         </div>
+         <div class="siege-consequence-detail-row siege-consequence-target-row">
+            <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+               {{#each this.targetOptions}}
+               <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+               {{/each}}
+            </select>
+         </div>
+         {{/if}}
+
+         {{#if this.isRule}}
+         <div class="siege-consequence-rule-row">
+            <textarea class="consequence-rule-json" rows="5" placeholder="{{../i18n.ruleElement}}">{{this.ruleJson}}</textarea>
+            <div class="siege-consequence-detail-row">
+               <span class="consequence-rule-status invalid">{{../i18n.invalidRuleElement}}</span>
+               <span class="siege-consequence-separator">|</span>
+               <label class="siege-inline-checkbox-tight">
+                  <input type="checkbox" class="consequence-duration-cb" {{#if this.hasDuration}}checked{{/if}}> {{../i18n.duration}}
+               </label>
+               <span class="consequence-duration-controls" {{#unless this.hasDuration}}style="display: none;"{{/unless}}>
+                  <select class="consequence-duration-unit">
+                     {{#each this.durationUnitOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <input type="number" class="consequence-duration-value siege-input-tiny" value="{{this.durationValue}}" min="1">
+               </span>
+            </div>
+            <div class="siege-consequence-detail-row siege-consequence-target-row">
+               <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+                  {{#each this.targetOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+         {{/if}}
+
+         {{#if this.isDamage}}
+         <div class="siege-consequence-builder consequence-damage-parts">
+            {{#each this.damageParts}}
+            <div class="consequence-damage-part-row" data-part-index="{{this.index}}">
+               <input type="number" class="cdp-dice dp-input-small" value="{{this.dice}}">
+               <span class="dp-separator">d</span>
+               <select class="cdp-die dp-input-med">
+                  {{#each this.dieOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                  {{/each}}
+               </select>
+               <select class="cdp-type siege-flex-1">
+                  {{#each this.typeOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <select class="cdp-category siege-flex-1">
+                  {{#each this.categoryOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <a class="remove-consequence-damage-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+            <button type="button" class="add-consequence-damage-part"><i class="fa-solid fa-plus"></i> {{../i18n.addDamageInstance}}</button>
+            <div class="siege-consequence-detail-row">
+               <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+                  {{#each this.targetOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+         {{/if}}
+
+         {{#if this.isHeal}}
+         <div class="siege-consequence-builder consequence-heal-parts">
+            {{#each this.healParts}}
+            <div class="consequence-heal-part-row" data-part-index="{{this.index}}">
+               <input type="number" class="chp-dice dp-input-small" value="{{this.dice}}">
+               <span class="dp-separator">d</span>
+               <select class="chp-die dp-input-med">
+                  {{#each this.dieOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                  {{/each}}
+               </select>
+               <input type="number" class="chp-bonus siege-input-fixed" value="{{this.bonus}}" placeholder="+0">
+               <a class="remove-consequence-heal-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+            </div>
+            {{/each}}
+            <button type="button" class="add-consequence-heal-part"><i class="fa-solid fa-plus"></i> {{../i18n.addHealInstance}}</button>
+            <div class="siege-consequence-detail-row">
+               <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+                  {{#each this.targetOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+         {{/if}}
+
+         {{#if this.isSavingThrow}}
+         <div class="siege-consequence-builder consequence-saving-throw">
+            <div class="siege-consequence-detail-row">
+               <select class="consequence-save siege-flex-1" aria-label="{{../i18n.save}}">
+                  {{#each this.saveOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+               <input type="text" class="consequence-save-dc siege-input-fixed" value="{{this.dc}}" placeholder="{{../i18n.levelBasedDC}}">
+               <span class="siege-consequence-separator">|</span>
+               <label class="siege-inline-checkbox-tight">
+                  <input type="checkbox" class="consequence-basic-save-cb" {{#if this.basicSave}}checked{{/if}}> {{../i18n.isBasic}}
+               </label>
+            </div>
+            {{#if this.basicSave}}
+            <div class="siege-consequence-builder consequence-basic-save-damage-parts">
+               <header class="siege-header siege-save-consequence-header">
+                  <h4>{{../i18n.basicDamage}}</h4>
+               </header>
+               {{#each this.basicDamageParts}}
+               <div class="basic-save-damage-part-row" data-part-index="{{this.index}}">
+                  <input type="number" class="basic-cdp-dice dp-input-small" value="{{this.dice}}">
+                  <span class="dp-separator">d</span>
+                  <select class="basic-cdp-die dp-input-med">
+                     {{#each this.dieOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                     {{/each}}
+                  </select>
+                  <select class="basic-cdp-type siege-flex-1">
+                     {{#each this.typeOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <select class="basic-cdp-category siege-flex-1">
+                     {{#each this.categoryOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  <a class="remove-basic-save-damage-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+               </div>
+               {{/each}}
+               <button type="button" class="add-basic-save-damage-part"><i class="fa-solid fa-plus"></i> {{../i18n.addDamageInstance}}</button>
+            </div>
+            {{/if}}
+            <header class="siege-header siege-save-consequence-header">
+               <h4>{{../i18n.savingThrowConsequences}}</h4>
+               <a class="add-save-consequence siege-remove-icon"><i class="fa-solid fa-plus"></i> {{../i18n.addSavingThrowConsequence}}</a>
+            </header>
+            <div class="siege-save-consequences-list">
+               {{#each this.saveConsequences}}
+               <div class="siege-save-consequence-row" data-index="{{this.index}}">
+                  <div class="siege-flex-row siege-consequence-main-row">
+                     <select class="save-consequence-outcome siege-flex-1" aria-label="{{../../i18n.degreeOfSuccess}}">
+                        {{#each this.outcomeOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <select class="save-consequence-type siege-flex-1" aria-label="{{../../i18n.consequenceType}}">
+                        {{#each this.typeOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <a class="remove-save-consequence siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+                  </div>
+
+                  {{#if this.isCondition}}
+                  <div class="siege-consequence-detail-row save-consequence-condition-row">
+                     <img class="save-consequence-condition-icon" src="{{this.conditionIcon}}" alt="">
+                     <select class="save-consequence-condition siege-consequence-condition-select" aria-label="{{../../i18n.condition}}">
+                        {{#each this.conditionOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <input type="number" class="save-consequence-condition-value siege-input-tiny" value="{{this.value}}" min="1" aria-label="{{../../i18n.value}}" {{#unless this.conditionHasValue}}style="display: none;"{{/unless}}>
+                     <span class="siege-consequence-separator">|</span>
+                     <label class="siege-inline-checkbox-tight">
+                        <input type="checkbox" class="save-consequence-duration-cb" {{#if this.hasDuration}}checked{{/if}}> {{../../i18n.duration}}
+                     </label>
+                     <span class="save-consequence-duration-controls consequence-duration-controls" {{#unless this.hasDuration}}style="display: none;"{{/unless}}>
+                        <select class="save-consequence-duration-unit">
+                           {{#each this.durationUnitOptions}}
+                           <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                           {{/each}}
+                        </select>
+                        <input type="number" class="save-consequence-duration-value siege-input-tiny" value="{{this.durationValue}}" min="1">
+                     </span>
+                  </div>
+                  {{/if}}
+
+                  {{#if this.isEffect}}
+                  <div class="siege-consequence-detail-row save-consequence-effect-row">
+                     <img class="save-consequence-effect-icon" src="icons/svg/aura.svg" alt="">
+                     <input type="text" class="save-consequence-effect-uuid siege-flex-2" value="{{this.effectUuid}}" placeholder="{{../../i18n.uuid}}">
+                     <a class="save-consequence-effect-link invalid">{{../../i18n.uuid}}</a>
+                  </div>
+                  {{/if}}
+
+                  {{#if this.isRule}}
+                  <div class="siege-consequence-rule-row">
+                     <textarea class="save-consequence-rule-json" rows="5" placeholder="{{../../i18n.ruleElement}}">{{this.ruleJson}}</textarea>
+                     <div class="siege-consequence-detail-row">
+                        <span class="save-consequence-rule-status invalid">{{../../i18n.invalidRuleElement}}</span>
+                        <span class="siege-consequence-separator">|</span>
+                        <label class="siege-inline-checkbox-tight">
+                           <input type="checkbox" class="save-consequence-duration-cb" {{#if this.hasDuration}}checked{{/if}}> {{../../i18n.duration}}
+                        </label>
+                        <span class="save-consequence-duration-controls consequence-duration-controls" {{#unless this.hasDuration}}style="display: none;"{{/unless}}>
+                           <select class="save-consequence-duration-unit">
+                              {{#each this.durationUnitOptions}}
+                              <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                              {{/each}}
+                           </select>
+                           <input type="number" class="save-consequence-duration-value siege-input-tiny" value="{{this.durationValue}}" min="1">
+                        </span>
+                     </div>
+                  </div>
+                  {{/if}}
+
+                  {{#if this.isDamage}}
+                  <div class="siege-consequence-builder consequence-damage-parts">
+                     {{#each this.damageParts}}
+                     <div class="save-consequence-damage-part-row" data-part-index="{{this.index}}">
+                        <input type="number" class="save-cdp-dice dp-input-small" value="{{this.dice}}">
+                        <span class="dp-separator">d</span>
+                        <select class="save-cdp-die dp-input-med">
+                           {{#each this.dieOptions}}
+                           <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                           {{/each}}
+                        </select>
+                        <select class="save-cdp-type siege-flex-1">
+                           {{#each this.typeOptions}}
+                           <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                           {{/each}}
+                        </select>
+                        <select class="save-cdp-category siege-flex-1">
+                           {{#each this.categoryOptions}}
+                           <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                           {{/each}}
+                        </select>
+                        <a class="remove-save-consequence-damage-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+                     </div>
+                     {{/each}}
+                     <button type="button" class="add-save-consequence-damage-part"><i class="fa-solid fa-plus"></i> {{../../i18n.addDamageInstance}}</button>
+                  </div>
+                  {{/if}}
+
+                  {{#if this.isHeal}}
+                  <div class="siege-consequence-builder consequence-heal-parts">
+                     {{#each this.healParts}}
+                     <div class="save-consequence-heal-part-row" data-part-index="{{this.index}}">
+                        <input type="number" class="save-chp-dice dp-input-small" value="{{this.dice}}">
+                        <span class="dp-separator">d</span>
+                        <select class="save-chp-die dp-input-med">
+                           {{#each this.dieOptions}}
+                           <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                           {{/each}}
+                        </select>
+                        <input type="number" class="save-chp-bonus siege-input-fixed" value="{{this.bonus}}" placeholder="+0">
+                        <a class="remove-save-consequence-heal-part siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+                     </div>
+                     {{/each}}
+                     <button type="button" class="add-save-consequence-heal-part"><i class="fa-solid fa-plus"></i> {{../../i18n.addHealInstance}}</button>
+                  </div>
+                  {{/if}}
+               </div>
+               {{/each}}
+            </div>
+            <div class="siege-consequence-detail-row">
+               <select class="consequence-target siege-flex-1" aria-label="{{../i18n.applyTo}}">
+                  {{#each this.targetOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+         {{/if}}
+      </div>
+      {{/each}}
+   </div>
 </div>

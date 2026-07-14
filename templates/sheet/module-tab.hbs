@@ -1,0 +1,461 @@
+<div class="tab siege siege-tab siege-module-tab" data-tab="modules">
+   <div class="form-group siege-checkbox-row">
+      <label class="checkbox">
+         <input type="checkbox" data-module-path="isModule" {{#if flags.isModule}}checked{{/if}}>
+         {{i18n.isModule}}
+      </label>
+   </div>
+
+   {{#if flags.isModule}}
+   <div class="form-group">
+      <label>{{i18n.vehicleNames}} <i class="fa-solid fa-circle-info siege-info-icon" data-tooltip="{{i18n.vehicleNamesTooltip}}"></i></label>
+      <input type="text" data-module-path="vehicleNames" value="{{flags.vehicleNames}}">
+   </div>
+   <div class="form-group">
+      <label>{{i18n.craftingDC}}</label>
+      <input type="text" data-module-path="craftingDC" value="{{flags.craftingDC}}">
+   </div>
+   <div class="form-group">
+      <label>{{i18n.moduleType}}</label>
+      <select data-module-path="moduleType">
+         <option value="vehicle" {{#if vehicleSelected}}selected{{/if}}>{{i18n.vehicleModule}}</option>
+         <option value="component" {{#if componentSelected}}selected{{/if}}>{{i18n.componentModule}}</option>
+      </select>
+   </div>
+   <div class="form-group">
+      <label>{{i18n.installType}}</label>
+      <select data-module-path="installType">
+         <option value="">{{i18n.selectInstallType}}</option>
+         {{#each installTypeOptions}}
+         <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+         {{/each}}
+      </select>
+   </div>
+
+   {{#if vehicleSelected}}
+   <hr>
+   <header class="siege-header">
+      <div class="siege-module-add-row">
+         <select class="module-add-entry-type">
+            {{#each addEntryOptions}}
+            <option value="{{this.type}}|{{this.kind}}">{{this.label}}</option>
+            {{/each}}
+         </select>
+         <a class="module-add-entry" data-tooltip="{{i18n.addEntry}}"><i class="fa-solid fa-plus"></i></a>
+      </div>
+   </header>
+   <div class="siege-module-entries">
+      {{#each entries}}
+      <details class="siege-module-acc" data-entry-id="{{this.id}}" {{#if this.open}}open{{/if}}>
+         <summary>
+            <span><i class="fa-solid fa-chevron-right"></i> {{this.title}}</span>
+            <a class="module-remove-entry"><i class="fa-solid fa-trash"></i></a>
+         </summary>
+         <div class="siege-module-body">
+            {{#if this.isRule}}
+            <div class="form-group">
+               <label>{{../i18n.label}}</label>
+               <input type="text" data-entry-field="label" value="{{this.label}}">
+            </div>
+            <div class="form-group align-top">
+               <label>{{../i18n.ruleElementJson}}</label>
+               <div class="siege-module-json-editor">
+                  <textarea data-entry-field="json" rows="6">{{this.json}}</textarea>
+                  <div class="siege-module-json-actions">
+                     <a class="module-validate-json"><i class="fa-solid fa-check"></i> {{../i18n.validateRule}}</a>
+                     <a class="module-format-json"><i class="fa-solid fa-wand-magic-sparkles"></i> {{../i18n.formatJson}}</a>
+                  </div>
+                  <div class="module-rule-validation"></div>
+               </div>
+            </div>
+            {{/if}}
+
+            {{#if this.isLoadCapacity}}
+            <div class="form-group">
+               <label>{{../i18n.value}}</label>
+               <input type="number" data-entry-field="value" value="{{this.value}}" step="0.1">
+            </div>
+            {{/if}}
+
+            {{#if this.isSpeed}}
+            <div class="form-group">
+               <label>{{../i18n.value}}</label>
+               <input type="number" data-entry-field="value" value="{{this.value}}">
+            </div>
+            {{/if}}
+
+            {{#if this.isSave}}
+            <div class="form-group">
+               <label>{{../i18n.savingThrow}}</label>
+               <select data-entry-field="save">
+                  <option value="reflex" {{#if this.reflexSelected}}selected{{/if}}>{{../i18n.saveReflex}}</option>
+                  <option value="will" {{#if this.willSelected}}selected{{/if}}>{{../i18n.saveWill}}</option>
+                  <option value="fortitude" {{#if this.fortitudeSelected}}selected{{/if}}>{{../i18n.saveFortitude}}</option>
+               </select>
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.value}}</label>
+               <input type="number" data-entry-field="value" value="{{this.value}}">
+            </div>
+            {{/if}}
+
+            {{#if this.isShield}}
+            <div class="form-group">
+               <label>{{../i18n.name}}</label>
+               <input type="text" data-entry-field="name" value="{{this.name}}">
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.icon}}</label>
+               <input type="text" data-entry-field="img" value="{{this.img}}">
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.acBonus}}</label>
+                  <input type="number" data-entry-field="acBonus" value="{{this.acBonus}}" min="0">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.hitPoints}}</label>
+                  <input type="number" data-entry-field="hp" value="{{this.hp}}" min="1">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.hardness}}</label>
+                  <input type="number" data-entry-field="hardness" value="{{this.hardness}}" min="0">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.speedPenalty}}</label>
+                  <input type="number" data-entry-field="speedPenalty" value="{{this.speedPenalty}}" min="0">
+               </div>
+            </div>
+            {{/if}}
+
+            {{#if this.isLight}}
+            <div class="form-group">
+               <label>{{../i18n.name}}</label>
+               <input type="text" data-entry-field="name" value="{{this.name}}">
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.icon}}</label>
+               <input type="text" data-entry-field="img" value="{{this.img}}">
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.lightConfiguration}}</label>
+               <div class="module-light-editor">
+                  <div class="module-light-preview" style="background: {{this.lightPreview.color}};">
+                     <i class="fa-solid {{this.lightPreview.icon}}"></i>
+                  </div>
+                  <a class="module-open-light-editor">
+                     <i class="fa-solid fa-pen-to-square"></i>
+                     <span>{{this.lightPreview.label}}</span>
+                  </a>
+                  <span class="module-light-summary">{{this.lightPreview.summary}}</span>
+               </div>
+            </div>
+            {{/if}}
+
+            {{#if this.isAction}}
+            <div class="form-group">
+               <label>{{../i18n.name}}</label>
+               <input type="text" data-entry-field="name" value="{{this.name}}">
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.icon}}</label>
+               <input type="text" data-entry-field="img" value="{{this.img}}">
+            </div>
+            <div class="form-group">
+               <label>{{../i18n.description}}</label>
+               <textarea data-entry-field="description" rows="3">{{this.description}}</textarea>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.actions}}</label>
+                  <input type="number" data-entry-field="actions" value="{{this.actions}}" min="0">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.strikeAttackBonus}}</label>
+                  <input type="number" data-entry-field="attackBonus" value="{{this.attackBonus}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.rollOptions}}</label>
+                  <input type="text" data-entry-field="rollOptions" value="{{this.rollOptions}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.traits}}</label>
+                  <input type="text" data-entry-field="traits" value="{{this.traits}}">
+               </div>
+            </div>
+            <div class="form-group">
+               <label class="siege-bold-checkbox">
+                  <input type="checkbox" data-entry-field="usesAmmunition" {{#if this.usesAmmunition}}checked{{/if}}> {{../i18n.usesAmmunition}}
+               </label>
+            </div>
+            <div class="form-group align-top">
+               <label>{{../i18n.ammunitionTypes}}</label>
+               <div class="module-ammo-drop" data-entry-id="{{this.id}}">
+                  <div class="module-ammo-drop-label"><i class="fa-solid fa-arrow-down-to-bracket"></i> {{../i18n.dropAmmo}}</div>
+                  <div class="crew-access-badges">
+                     {{#each this.ammoTypeBadges}}
+                     <span class="crew-access-badge">{{this.label}} <a class="module-remove-ammo" data-slug="{{this.slug}}"><i class="fa-solid fa-times"></i></a></span>
+                     {{/each}}
+                  </div>
+               </div>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.maxLoaded}}</label>
+                  <input type="number" data-entry-field="maxLoaded" value="{{this.maxLoaded}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.spend}}</label>
+                  <input type="number" data-entry-field="spend" value="{{this.spend}}">
+               </div>
+            </div>
+            <div class="form-group">
+               <label class="siege-bold-checkbox">
+                  <input type="checkbox" data-entry-field="isRanged" {{#if this.isRanged}}checked{{/if}}> {{../i18n.isRangedAttack}}
+               </label>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.blindRange}}</label>
+                  <input type="number" data-entry-field="blindRange" value="{{this.blindRange}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.minRangeVolley}}</label>
+                  <input type="number" data-entry-field="minRange" value="{{this.minRange}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.rangeIncrement}}</label>
+                  <input type="number" data-entry-field="rangeIncrement" value="{{this.rangeIncrement}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.maxRange}}</label>
+                  <input type="number" data-entry-field="maxRange" value="{{this.maxRange}}">
+               </div>
+            </div>
+            {{#if this.isAbility}}
+            <div class="form-group">
+               <label>{{../i18n.attackActionType}}</label>
+               <select data-entry-field="actionType">
+                  {{#each this.actionTypeOptions}}
+                  <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                  {{/each}}
+               </select>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.areaFeet}}</label>
+                  <input type="number" data-entry-field="areaSize" value="{{this.areaSize}}" step="5">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.attackActionType}}</label>
+                  <select data-entry-field="areaType">
+                     {{#each this.areaTypeOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                     {{/each}}
+                  </select>
+               </div>
+               <div class="siege-grid-col siege-grid-wide">
+                  <label>{{../i18n.saveDC}}</label>
+                  <input type="text" data-entry-field="saveDCPaths" value="{{this.saveDCPaths}}">
+               </div>
+            </div>
+            {{/if}}
+            <div class="form-group align-top">
+               <label>{{../i18n.damage}}</label>
+               <div class="siege-damage-parts">
+                  {{#each this.damagePartsData}}
+                  <div class="damage-part-row" data-damage-index="{{this.index}}">
+                     <input type="number" class="module-dp-dice dp-input-small" value="{{this.dice}}">
+                     <span class="dp-separator">d</span>
+                     <select class="module-dp-die dp-input-med">
+                        {{#each this.dieOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                        {{/each}}
+                     </select>
+                     <select class="module-dp-type siege-flex-1">
+                        {{#each this.typeOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <select class="module-dp-category siege-flex-1">
+                        {{#each this.categoryOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <a class="module-remove-damage siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+                  </div>
+                  {{/each}}
+                  <button type="button" class="module-add-damage"><i class="fa-solid fa-plus"></i> {{../i18n.addDamage}}</button>
+               </div>
+            </div>
+            {{/if}}
+         </div>
+      </details>
+      {{/each}}
+   </div>
+   {{/if}}
+
+   {{#if componentSelected}}
+   <hr>
+   <header class="siege-header">
+      <h4>{{i18n.componentEntries}}</h4>
+      <a class="module-add-mod" data-tooltip="{{i18n.addModification}}"><i class="fa-solid fa-plus"></i></a>
+   </header>
+   <div class="siege-module-mods">
+      {{#each modifications}}
+      <details class="siege-module-acc" data-mod-id="{{this.id}}" {{#if this.open}}open{{/if}}>
+         <summary>
+            <span><i class="fa-solid fa-chevron-right"></i> {{this.title}}</span>
+            <a class="module-remove-mod"><i class="fa-solid fa-trash"></i></a>
+         </summary>
+         <div class="siege-module-body">
+            <div class="form-group">
+               <label>{{../i18n.targetSlug}}</label>
+               <input type="text" data-mod-field="targetSlug" value="{{this.targetSlug}}">
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.loadCapacityDelta}}</label>
+                  <input type="number" data-mod-field="loadCapacityDelta" value="{{this.loadCapacityDelta}}" step="0.1">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.attackBonusDelta}}</label>
+                  <input type="number" data-mod-field="attackBonusDelta" value="{{this.attackBonusDelta}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.saveDCDelta}}</label>
+                  <input type="number" data-mod-field="saveDCDelta" value="{{this.saveDCDelta}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.loadActionsRequiredDelta}}</label>
+                  <input type="number" data-mod-field="loadActionsRequiredDelta" value="{{this.loadActionsRequiredDelta}}">
+               </div>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.maxLoadedDelta}}</label>
+                  <input type="number" data-mod-field="maxLoadedDelta" value="{{this.maxLoadedDelta}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.spendDelta}}</label>
+                  <input type="number" data-mod-field="spendDelta" value="{{this.spendDelta}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.rollOptions}}</label>
+                  <input type="text" data-mod-field="rollOptions" value="{{this.rollOptions}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.traits}}</label>
+                  <input type="text" data-mod-field="traits" value="{{this.traits}}">
+               </div>
+            </div>
+            <div class="form-group">
+               <label class="siege-bold-checkbox">
+                  <input type="checkbox" data-mod-field="modifyRange" {{#if this.modifyRange}}checked{{/if}}> {{../i18n.modifyRange}}
+               </label>
+            </div>
+            <div class="module-mod-range-settings" {{#unless this.modifyRange}}style="display: none;"{{/unless}}>
+               <div class="form-group">
+                  <label class="siege-bold-checkbox">
+                     <input type="checkbox" data-mod-field="isRanged" {{#if this.isRanged}}checked{{/if}}> {{../i18n.isRangedAttack}}
+                  </label>
+               </div>
+               <div class="module-mod-ranged-fields" {{#unless this.isRanged}}style="display: none;"{{/unless}}>
+                  <div class="form-group siege-grid-4">
+                     <div class="siege-grid-col">
+                        <label>{{../i18n.blindRange}}</label>
+                        <input type="number" data-mod-field="blindRange" value="{{this.blindRange}}">
+                     </div>
+                     <div class="siege-grid-col">
+                        <label>{{../i18n.minRangeVolley}}</label>
+                        <input type="number" data-mod-field="minRange" value="{{this.minRange}}">
+                     </div>
+                     <div class="siege-grid-col">
+                        <label>{{../i18n.rangeIncrement}}</label>
+                        <input type="number" data-mod-field="rangeIncrement" value="{{this.rangeIncrement}}">
+                     </div>
+                     <div class="siege-grid-col">
+                        <label>{{../i18n.maxRange}}</label>
+                        <input type="number" data-mod-field="maxRange" value="{{this.maxRange}}">
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <div class="form-group">
+               <label class="siege-bold-checkbox">
+                  <input type="checkbox" data-mod-field="modifyArea" {{#if this.modifyArea}}checked{{/if}}> {{../i18n.modifyArea}}
+               </label>
+            </div>
+            <div class="module-mod-area-settings" {{#unless this.modifyArea}}style="display: none;"{{/unless}}>
+               <div class="form-group">
+                  <label>{{../i18n.areaFeet}}</label>
+                  <div class="siege-grid-4">
+                     <input type="number" data-mod-field="areaSize" value="{{this.areaSize}}" step="5" class="siege-grid-col">
+                     <select data-mod-field="areaType" class="siege-grid-col">
+                        {{#each this.areaTypeOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                        {{/each}}
+                     </select>
+                  </div>
+               </div>
+            </div>
+            <div class="form-group siege-grid-4">
+               <div class="siege-grid-col">
+                  <label>{{../i18n.prerequisiteName}}</label>
+                  <input type="text" data-mod-field="prerequisiteName" value="{{this.prerequisiteName}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.prerequisiteDelta}}</label>
+                  <input type="number" data-mod-field="prerequisiteDelta" value="{{this.prerequisiteDelta}}">
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.skillName}}</label>
+                  <select data-mod-field="skillName">
+                     {{#each this.skillOptions}}
+                     <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                     {{/each}}
+                  </select>
+                  {{#if this.isLore}}
+                  <input type="text" data-mod-field="skillLoreName" value="{{this.skillLoreInput}}" placeholder="{{../i18n.skillLoreName}}">
+                  {{/if}}
+               </div>
+               <div class="siege-grid-col">
+                  <label>{{../i18n.skillDCDelta}}</label>
+                  <input type="number" data-mod-field="skillDCDelta" value="{{this.skillDCDelta}}">
+               </div>
+            </div>
+            <div class="form-group align-top">
+               <label>{{../i18n.damage}}</label>
+               <div class="siege-damage-parts">
+                  {{#each this.damagePartsData}}
+                  <div class="damage-part-row" data-damage-index="{{this.index}}">
+                     <input type="number" class="module-dp-dice dp-input-small" value="{{this.dice}}">
+                     <span class="dp-separator">d</span>
+                     <select class="module-dp-die dp-input-med">
+                        {{#each this.dieOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.value}}</option>
+                        {{/each}}
+                     </select>
+                     <select class="module-dp-type siege-flex-1">
+                        {{#each this.typeOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <select class="module-dp-category siege-flex-1">
+                        {{#each this.categoryOptions}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                        {{/each}}
+                     </select>
+                     <a class="module-remove-damage siege-remove-icon"><i class="fa-solid fa-trash"></i></a>
+                  </div>
+                  {{/each}}
+                  <button type="button" class="module-add-damage"><i class="fa-solid fa-plus"></i> {{../i18n.addDamage}}</button>
+               </div>
+            </div>
+         </div>
+      </details>
+      {{/each}}
+   </div>
+   {{/if}}
+   {{/if}}
+</div>

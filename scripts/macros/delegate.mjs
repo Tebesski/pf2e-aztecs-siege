@@ -1,6 +1,7 @@
 import { MODULE_ID } from "../constants.mjs"
 import { tKey } from "../utils.mjs"
 import { SiegePortableManager } from "../managers/portable.mjs"
+import { SiegeSocketManager } from "../managers/sockets.mjs"
 
 export async function delegateWeightMacro(crewman, siege) {
    if (!crewman || !siege) return
@@ -33,9 +34,7 @@ export async function delegateWeightMacro(crewman, siege) {
          tKey("Notifications.NothingToDelegate", { name: crewman.name }),
       )
 
-   const targets = SiegePortableManager._collectLifters(siege, {
-      excludeActorId: crewman.id,
-   })
+   const targets = SiegePortableManager._collectLifters(siege, crewman.id)
    if (targets.length === 0)
       return ui.notifications.warn(
          tKey("Notifications.NotCrewMembersToDelegate"),
@@ -68,6 +67,7 @@ export async function delegateWeightMacro(crewman, siege) {
    `
 
    const choice = await foundry.applications.api.DialogV2.wait({
+      classes: ["siege-v2-dialog"],
       window: { title: tKey("Delegate.Title", { name: siege.name }) },
       position: { width: 480 },
       content,
@@ -96,37 +96,36 @@ export async function delegateWeightMacro(crewman, siege) {
 
    let amount = Math.min(choice.amount, myBulk)
    const headroom = Math.max(0, target.capacity - target.currentBulk)
-   if (amount > headroom) {
-      ui.notifications.warn(
-         tKey("Delegate.CapDelegation", { name: target.actor.name, headroom }),
-      )
-      amount = headroom
-   }
+   if (amount > headroom) amount = headroom
    if (amount <= 0) return
 
    const newMyBulk = myBulk - amount
    const newTheirBulk = target.currentBulk + amount
-   const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
 
-   await myLifted.update(
-      { "system.bulk.value": newMyBulk },
-      { siegeDropCascade: true },
-   )
-   await myEffect.update(
-      { "system.badge.value": newMyBulk },
+   await SiegeSocketManager.modifySiegeItem(
+      crewman.uuid,
+      "update",
+      [
+         { _id: myLifted.id, "system.bulk.value": newMyBulk },
+         { _id: myEffect.id, "system.badge.value": newMyBulk },
+      ],
       { siegeDropCascade: true },
    )
 
-   await target.liftedItem.update(
-      { "system.bulk.value": newTheirBulk },
+   const targetUpdates = [
+      { _id: target.liftedItem.id, "system.bulk.value": newTheirBulk },
+   ]
+   if (target.liftingEffect)
+      targetUpdates.push({
+         _id: target.liftingEffect.id,
+         "system.badge.value": newTheirBulk,
+      })
+   await SiegeSocketManager.modifySiegeItem(
+      target.actor.uuid,
+      "update",
+      targetUpdates,
       { siegeDropCascade: true },
    )
-   if (target.liftingEffect) {
-      await target.liftingEffect.update(
-         { "system.badge.value": newTheirBulk },
-         { siegeDropCascade: true },
-      )
-   }
 
    ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: crewman }),

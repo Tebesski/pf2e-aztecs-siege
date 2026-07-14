@@ -11,13 +11,16 @@ import {
    tplPath,
    tKey,
    countOccupants,
-   buildStrikeRules,
+   getCrewActors,
+   buildMountedSiegeRules,
    getCostGlyph,
+   buildCrewLeaderEffect,
 } from "../utils.mjs"
-import { AmmunitionManager } from "../managers/ammunition.mjs"
 import { SiegeCrewManager } from "../managers/crew.mjs"
 import { SiegePortableManager } from "../managers/portable.mjs"
-import { getActionsForCrew, ensureSiegeCSS } from "./helpers.mjs"
+import { ensureSiegeCSS } from "./helpers.mjs"
+import { SiegeSocketManager } from "../managers/sockets.mjs"
+import { AmmunitionManager } from "../managers/ammunition.mjs"
 
 export async function mountMacro(crewmanActor = null, siegeActor = null) {
    let crewman = crewmanActor
@@ -34,8 +37,22 @@ export async function mountMacro(crewmanActor = null, siegeActor = null) {
       siege = targets[0].actor
    }
 
+   const { VehicleEntryManager } = await import("../managers/entry.mjs")
+   if (VehicleEntryManager.isEnterable(siege)) {
+      const { enterVehicleMacro } = await import("./enter.mjs")
+      return enterVehicleMacro(crewman, siege)
+   }
+
    if (!isSiege(siege))
       return ui.notifications.warn(tKey("Notifications.MustBeSiegeWeapon"))
+
+   const enteredVehicle = crewman.itemTypes.effect.find(
+      (e) => e.getFlag(MODULE_ID, "isEntered") && e.getFlag(MODULE_ID, "siegeId"),
+   )
+   if (enteredVehicle) {
+      ui.notifications.warn(tKey("Enter.Notifications.AlreadyInVehicle"))
+      return false
+   }
 
    const existing = crewman.itemTypes.effect.find(
       (e) => e.getFlag(MODULE_ID, "siegeId") === siege.id,
@@ -55,7 +72,9 @@ export async function mountMacro(crewmanActor = null, siegeActor = null) {
    if (crewPositions.length === 0)
       return ui.notifications.warn(tKey("Notifications.NoCrewPositions"))
 
-   const positionsData = await buildPositionsData(siege, crewPositions)
+   const positionsData = await buildPositionsData(siege, crewPositions, () =>
+      tKey("Mount.Button"),
+   )
    const htmlContent = await renderHbs(tplPath("macros/mount.hbs"), {
       positions: positionsData,
       i18n: {
@@ -65,6 +84,7 @@ export async function mountMacro(crewmanActor = null, siegeActor = null) {
 
    class SiegeMountApp extends foundry.applications.api.ApplicationV2 {
       static DEFAULT_OPTIONS = {
+         classes: ["siege-v2-app", "siege-mount-app"],
          window: { title: tKey("Mount.Title", { name: siege.name }) },
          position: { width: 450, height: "auto" },
       }
@@ -81,18 +101,18 @@ export async function mountMacro(crewmanActor = null, siegeActor = null) {
          content.innerHTML = result
       }
       _onRender() {
-         $(this.element)
-            .find(".mount-btn")
-            .on("click", (e) =>
+         this.element.querySelectorAll(".mount-btn").forEach((button) =>
+            button.addEventListener("click", (e) =>
                handleMountClick(e, this, crewman, siege, crewPositions),
-            )
+            ),
+         )
       }
    }
 
    new SiegeMountApp().render(true)
 }
 
-async function buildPositionsData(siege, crewPositions) {
+export async function buildPositionsData(siege, crewPositions, labelFn = null) {
    const ammoTypes = siege.getFlag(MODULE_ID, "ammunitionTypes") || []
    const actions = siege.items.filter((a) => a.type === "action")
 
@@ -121,8 +141,11 @@ async function buildPositionsData(siege, crewPositions) {
          minReq,
          maxCap,
          isMet,
+         isFull: currentOccupants >= maxCap,
          actions: posActions,
-         mountLabel: tKey("Mount.MountAs", { position: pos.title }),
+         mountLabel: labelFn
+            ? labelFn(pos.title)
+            : tKey("Mount.Button"),
       }
    })
 }
@@ -130,11 +153,21 @@ async function buildPositionsData(siege, crewPositions) {
 function buildActionRow(a, ammoTypes) {
    const flag = a.getFlag(MODULE_ID, "siegeAction") || {}
    let ammoName = null
-   if (flag.usesAmmunition !== false && flag.ammoSlug) {
-      const found = ammoTypes.find(
-         (t) => slugify(t.slug || t.name) === flag.ammoSlug,
-      )
-      ammoName = found ? found.name : flag.ammoSlug
+
+   if (flag.usesAmmunition !== false) {
+      const ammoChoices = AmmunitionManager.ammoSlugsForAction(flag)
+      if (ammoChoices.length === 0) {
+         ammoName = tKey("Ammunition.TypeUnassigned")
+      } else {
+         const names = ammoChoices
+            .map((slug) =>
+               ammoTypes.find((t) => slugify(t.slug || t.name) === slug)?.name,
+            )
+            .filter(Boolean)
+         ammoName = names.length
+            ? names.join(" / ")
+            : tKey("Ammunition.TypeUnassigned")
+      }
    }
 
    const profs = flag.proficiencies || [
@@ -164,6 +197,7 @@ function buildActionRow(a, ammoTypes) {
       description: a.system.description.value,
       costGlyph: getCostGlyph(a),
       flag,
+      hasAmmunition: flag.usesAmmunition !== false && !!ammoName,
       ammoName,
       spend: parseInt(flag.spend) || 1,
       isAttack: flag.isAttack || flag.isStrike,
@@ -186,7 +220,8 @@ function buildActionRow(a, ammoTypes) {
 
 async function handleMountClick(e, app, crewman, siege, crewPositions) {
    e.preventDefault()
-   const chosenPosition = $(e.currentTarget).data("position")
+   e.stopPropagation()
+   const chosenPosition = e.currentTarget?.dataset?.position
    const posData = crewPositions.find((p) => p.title === chosenPosition)
    const maxAllowed = parseInt(posData?.max) || 1
    const currentOccupants = countOccupants(siege, chosenPosition)
@@ -203,24 +238,38 @@ async function handleMountClick(e, app, crewman, siege, crewPositions) {
    const traits = siege.system.traits?.value || []
    const isPortable = traits.includes("portable")
    let liftedBulk = 0
+   let isLeader = false
 
    if (isPortable) {
-      liftedBulk = await promptForLift(crewman, siege)
-      if (liftedBulk === null) return
+      const liftResult = await promptForLift(crewman, siege)
+      if (!liftResult) return
+      liftedBulk = liftResult.liftedBulk
+      isLeader = liftResult.isLeader
    }
 
-   const rules = buildAllStrikeRules(siege, chosenPosition)
+   const rules = buildAllStrikeRules(siege, chosenPosition, crewman)
    const totalBulk = parseInt(siege.getFlag(MODULE_ID, "bulk")) || 0
    const embeddedDocs = buildMountedDocs(
       siege,
       chosenPosition,
+      posData,
       rules,
       isPortable,
       liftedBulk,
       totalBulk,
+      isLeader,
    )
 
-   await crewman.createEmbeddedDocuments("Item", embeddedDocs)
+   await SiegeSocketManager.modifySiegeItem(
+      crewman.uuid,
+      "create",
+      embeddedDocs,
+   )
+   await SiegeCrewManager.syncCrewPositionExtras(crewman, siege, chosenPosition)
+   const { VehicleEntryManager } = await import("../managers/entry.mjs")
+   if (VehicleEntryManager._userOwnsActor(game.user, crewman))
+      await VehicleEntryManager.setSelectedCrewForVehicle(siege, crewman)
+
    ui.notifications.info(
       tKey("Notifications.CrewmanMounted", {
          crewman: crewman.name,
@@ -228,41 +277,33 @@ async function handleMountClick(e, app, crewman, siege, crewPositions) {
          position: chosenPosition,
       }),
    )
-   await SiegePortableManager.syncPortableState(siege)
+   if (isPortable) await SiegePortableManager.syncPortableState(siege)
+   await SiegeCrewManager.updateSiegeSpeed(siege)
    app.close()
 }
 
-function buildAllStrikeRules(siege, chosenPosition) {
-   const rules = []
-   const actions = siege.items.filter((a) => a.type === "action")
-
-   for (const a of actions) {
-      const flag = a.getFlag(MODULE_ID, "siegeAction")
-      if (!flag || !flag.isStrike) continue
-      if (
-         flag.crewAccess?.length > 0 &&
-         !flag.crewAccess.includes(chosenPosition)
-      )
-         continue
-
-      rules.push(...buildStrikeRules(siege, { ...flag, strikeLabel: a.name }))
-   }
-   return rules
+function buildAllStrikeRules(siege, chosenPosition, actor = null) {
+   return buildMountedSiegeRules(siege, chosenPosition, actor)
 }
 
 function buildMountedDocs(
    siege,
    chosenPosition,
+   posData,
    rules,
    isPortable,
    liftedBulk,
    totalBulk,
+   isLeader,
 ) {
    const docs = [
       {
-         name: tKey("Markers.MountedOn", { name: siege.name }),
+         name: tKey("Markers.MountedOnPosition", {
+            siege: siege.name,
+            position: chosenPosition,
+         }),
          type: "effect",
-         img: validImg(siege.img, DEFAULT_PERSON_IMG),
+         img: validImg(posData?.icon, DEFAULT_PERSON_IMG),
          system: {
             level: { value: 1 },
             description: {
@@ -315,6 +356,10 @@ function buildMountedDocs(
       )
    }
 
+   if (isLeader) {
+      docs.push(buildCrewLeaderEffect(siege.id))
+   }
+
    return docs
 }
 
@@ -322,12 +367,9 @@ async function promptForLift(crewman, siege) {
    const totalBulk = siege.getFlag(MODULE_ID, "bulk") || 0
    let currentlyLifted = 0
    const lifters = []
+   let hasLeader = false
 
-   for (const actor of game.actors) {
-      const onSiege = actor.itemTypes.effect.some(
-         (e) => e.getFlag(MODULE_ID, "siegeId") === siege.id,
-      )
-      if (!onSiege) continue
+   for (const actor of getCrewActors(siege)) {
       const liftItem = actor.items.find(
          (i) =>
             i.getFlag(MODULE_ID, "isLiftedItem") &&
@@ -336,107 +378,131 @@ async function promptForLift(crewman, siege) {
       if (liftItem) {
          const bulk = liftItem.system.bulk?.value || 0
          currentlyLifted += bulk
-         lifters.push(`<li>${actor.name}: ${bulk} Bulk</li>`)
+
+         const isLeader = actor.itemTypes.effect.some(
+            (e) =>
+               e.getFlag(MODULE_ID, "isCrewLeader") &&
+               e.getFlag(MODULE_ID, "siegeId") === siege.id,
+         )
+         if (isLeader) hasLeader = true
+         const leaderStr = isLeader ? " 👑" : ""
+
+         lifters.push(`${actor.name}: ${bulk} Bulk${leaderStr}`)
       }
    }
 
-   const capData = SiegePortableManager._getLifterCapacity(crewman, null)
-   const myCapacity = capData.capacity
+   const capData = SiegePortableManager._getLifterCapacity(crewman, 0)
    const remainingBulk = Math.max(0, totalBulk - currentlyLifted)
-   const inputMax = Math.min(remainingBulk, myCapacity)
+   const maxLift = Math.max(0, Math.min(remainingBulk, capData.capacity))
 
-   const currentLiftersLabel = tKey("Mount.CurrentLifters")
-   const noneLabel = tKey("Mount.None")
-   const bulkLiftedText = tKey("Mount.BulkLifted", {
-      lifted: currentlyLifted,
-      total: totalBulk,
-   })
-   const capacityText = tKey("Mount.CarryingCapacity", {
-      enc: capData.encumberedAfter,
-      encPlus: capData.encumberedAfter + 1,
-      max: capData.maxLimit,
-   })
-   const bulkToLift = tKey("Mount.BulkToLift")
+   const templateData = {
+      lifters,
+      totalBulk,
+      maxLift,
+      capData: {
+         otherBulk: capData.otherBulk,
 
-   const dialogContent = `
-      <div class="siege-lift-dialog">
-         <p>${currentLiftersLabel}</p>
-         <ul>${lifters.length ? lifters.join("") : `<li>${noneLabel}</li>`}</ul>
-         <p><strong id="lifted-tracker">${bulkLiftedText}</strong></p>
-         <p class="siege-cap-note">${capacityText} <strong id="lift-capacity-tracker">${capData.otherBulk}</strong></p>
-      </div>
-      <div class="form-group">
-         <label>${bulkToLift}</label>
-         <input type="number" id="lift-bulk-input" value="0" min="0" max="${inputMax}">
-      </div>
-      <p id="lift-bulk-warn" class="siege-warn"></p>
-   `
+encumberedAfter: capData.encumberedAfter,
+         maxLimit: capData.maxLimit,
+      },
+      i18n: {
+         currentLifters: tKey("Mount.CurrentLifters"),
+         none: tKey("Mount.None"),
+         bulkLifted: tKey("Mount.BulkLifted", {
+            lifted: currentlyLifted,
+            total: totalBulk,
+         }),
+         carryingCapacity: tKey("Mount.CarryingCapacity"),
+         currentBulk: tKey("Mount.CurrentBulk"),
+         bulkToLift: tKey("Mount.BulkToLift"),
+         encumberedLabel: tKey("Mount.EncumberedLabel", {
+            value: capData.encumberedAfter,
+         }),
+         maxBulkLabel: tKey("Mount.MaxBulkLabel", { value: capData.maxLimit }),
+      },
+   }
+
+   const dialogContent = await renderHbs(
+      tplPath("macros/lift.hbs"),
+      templateData,
+   )
+
+   const leaderHtml = `
+      <div class="form-group" style="display: flex; align-items: center; justify-content: flex-start; gap: 8px;">
+         <label style="flex: 0 0 auto;"><i class="fa-solid fa-crown" style="color: gold;"></i> ${tKey("Mount.CrewLeaderCheckbox")}</label>
+         <input type="checkbox" id="lift-crew-leader" style="flex: 0 0 auto; margin: 0; cursor: ${hasLeader ? "not-allowed" : "pointer"};" ${hasLeader ? "disabled" : ""}>
+      </div>`
+   const finalContent = dialogContent + leaderHtml
 
    const choice = await foundry.applications.api.DialogV2.wait({
+      classes: ["siege-v2-dialog"],
       window: { title: tKey("Mount.LiftTitle", { name: siege.name }) },
       position: { width: 480 },
-      content: dialogContent,
+      content: finalContent,
       buttons: [
          {
             action: "lift",
             label: tKey("Mount.LiftAndMount"),
             icon: "fa-solid fa-hand-rock",
+            callback: () => {
+               const val =
+                  parseInt(document.getElementById("lift-bulk-input")?.value) ||
+                  0
+               const isLeader =
+                  document.getElementById("lift-crew-leader")?.checked || false
+               return { liftedBulk: val, isLeader }
+            },
          },
       ],
-      render: () =>
-         bindLiftInput(
-            currentlyLifted,
-            totalBulk,
-            capData,
-            myCapacity,
-            remainingBulk,
-         ),
+      render: () => bindLiftInput(currentlyLifted, totalBulk, capData, maxLift),
    })
 
    if (!choice) return null
-
    let liftedBulk =
-      parseInt(document.getElementById("lift-bulk-input")?.value) || 0
-   if (liftedBulk < 0) liftedBulk = 0
-   if (liftedBulk > remainingBulk) liftedBulk = remainingBulk
-   if (liftedBulk > myCapacity) {
-      ui.notifications.warn(
-         tKey("Mount.CapAtMax", { name: crewman.name, max: myCapacity }),
-      )
-      liftedBulk = myCapacity
-   }
-   return liftedBulk
+      choice.liftedBulk < 0
+         ? 0
+         : choice.liftedBulk > maxLift
+           ? maxLift
+           : choice.liftedBulk
+   return { liftedBulk, isLeader: choice.isLeader }
 }
 
-function bindLiftInput(
-   currentlyLifted,
-   totalBulk,
-   capData,
-   myCapacity,
-   remainingBulk,
-) {
+function bindLiftInput(currentlyLifted, totalBulk, capData, maxLift) {
    const input = document.getElementById("lift-bulk-input")
    const tracker = document.getElementById("lifted-tracker")
-   const warn = document.getElementById("lift-bulk-warn")
-   const capTracker = document.getElementById("lift-capacity-tracker")
+   const addBulk = document.getElementById("lift-add-bulk")
+   const totBulk = document.getElementById("lift-tot-bulk")
+   const curBulkSpan = document.getElementById("lift-cur-bulk")
+
+   const getColor = (val) => {
+      if (val >= capData.maxLimit) return "red"
+
+if (val > capData.encumberedAfter) return "orange"
+      return "green"
+   }
+
+   if (curBulkSpan) curBulkSpan.style.color = getColor(capData.otherBulk)
+   if (totBulk) totBulk.style.color = getColor(capData.otherBulk)
+
    if (!input) return
 
    input.addEventListener("input", () => {
       let val = parseInt(input.value) || 0
       if (val < 0) val = 0
-      if (tracker) {
+      if (val > maxLift) {
+         val = maxLift
+         input.value = String(maxLift)
+      }
+      if (tracker)
          tracker.innerText = tKey("Mount.BulkLifted", {
             lifted: currentlyLifted + val,
             total: totalBulk,
          })
-      }
-      if (capTracker) capTracker.innerText = capData.otherBulk + val
-      if (warn) {
-         if (val > myCapacity)
-            warn.innerText = tKey("Mount.ExceedsCapacity", { max: myCapacity })
-         else if (val > remainingBulk)
-            warn.innerText = tKey("Mount.OnlyBulkLeft", { bulk: remainingBulk })
-         else warn.innerText = ""
+      if (addBulk) addBulk.innerText = val
+      if (totBulk) {
+         const total = capData.otherBulk + val
+         totBulk.innerText = total
+         totBulk.style.color = getColor(total)
       }
    })
 }

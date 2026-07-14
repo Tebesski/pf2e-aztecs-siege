@@ -5,11 +5,14 @@
             <div class="action-name">
                <img src="{{this.icon}}" class="action-icon" />
                <span>{{this.title}} ({{this.currentOccupants}} / {{this.maxCap}})</span>
-               <span class="siege-req-badge {{#if this.isMet}}siege-req-met{{else}}siege-req-unmet{{/if}}">{{localize "PF2E-AZTECS-SIEGE.Mount.MountAs" position=""}}: {{this.minReq}}</span>
+               <span class="siege-req-badge {{#if this.isMet}}siege-req-met{{else}}siege-req-unmet{{/if}}">{{localize "PF2E-AZTECS-SIEGE.Mount.Required" count=this.minReq}}</span>
+               <button type="button" class="mount-btn siege-mount-header-btn" data-position="{{this.title}}" {{#if this.isFull}}disabled title="{{localize "PF2E-AZTECS-SIEGE.Mount.PositionFullShort"}}"{{/if}}>
+                  <i class="fa-solid fa-user-plus"></i> {{this.mountLabel}}
+               </button>
             </div>
             <i class="fa-solid fa-chevron-right chevron"></i>
          </summary>
-         <div class="details-body">
+         <div class="details-body mount-position-body">
             <div class="siege-actions-accordion">
                {{#each this.actions}}
                   <details>
@@ -25,7 +28,7 @@
                         {{#if this.isAttack}}
                            <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Prerequisites"}}:</strong> {{this.prereqs}}</p>
                            <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Ammunition"}}:</strong>
-                              {{#if this.flag.ammoSlug}}{{this.ammoName}} ({{this.spend}}){{else}}{{localize "PF2E-AZTECS-SIEGE.Misc.None"}}{{/if}}
+                              {{#if this.hasAmmunition}}{{this.ammoName}} ({{this.spend}}){{else}}{{localize "PF2E-AZTECS-SIEGE.Misc.None"}}{{/if}}
                            </p>
                            <p><strong>{{localize "PF2E-AZTECS-SIEGE.ActionMacro.Traits"}}:</strong>
                               {{#if this.flag.traits}}{{this.flag.traits}}{{else}}{{localize "PF2E-AZTECS-SIEGE.Misc.None"}}{{/if}}
@@ -56,9 +59,6 @@
                   </details>
                {{/each}}
             </div>
-            <button class="roll-siege-btn mount-btn siege-mount-btn" data-position="{{this.title}}">
-               <i class="fa-solid fa-user-plus"></i> {{this.mountLabel}}
-            </button>
          </div>
       </details>
    {{/each}}
