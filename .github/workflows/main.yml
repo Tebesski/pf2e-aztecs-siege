@@ -100,6 +100,11 @@ jobs:
          # Create a "module.zip" archive containing all the module's required files.
          # If you have other directories or files that will need to be added to
          # your packaged module, add them here.
+         - name: Validate Compendium Packs
+           run: |
+              test -d packs/engines-of-war
+              find packs/engines-of-war -type f \( -name "*.ldb" -o -name "*.log" \) -size +0c | grep -q .
+
          - name: Create Module Archive
            run: |
               # Note that `zip` will only emit warnings when a file or directory
@@ -119,6 +124,7 @@ jobs:
                 styles/                              \
                 lang/                                \
                 assets/                              \
+                packs/                               \
               # Don't forget to add a backslash at the end of the line for any
               # additional files or directories!
 
